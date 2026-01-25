@@ -37,7 +37,7 @@
 
         .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 40px; padding: 30px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.8); overflow: hidden; }
         
-        /* フォントサイズを小さくし、改行を防ぐ設定を維持 */
+        /* 時計セクション：改行防止とサイズ調整 */
         .clock-card { padding: 15px 20px; display: flex; flex-direction: row; align-items: baseline; justify-content: center; border-radius: 24px; gap: 12px; flex-shrink: 0; white-space: nowrap; }
         .clock-date { font-size: 22px; color: var(--text-main); letter-spacing: 1px; }
         .clock-time { font-size: 22px; color: var(--text-main); }
@@ -175,6 +175,7 @@
 <audio id="alarmAudio" preload="auto"></audio>
 
 <script>
+    // 時計更新
     function updateClock() {
         const now = new Date();
         const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -183,6 +184,7 @@
     }
     setInterval(updateClock, 1000); updateClock();
 
+    // ToDo管理
     let todos = JSON.parse(localStorage.getItem('roku_todos')) || [];
     function renderTodos() {
         const list = document.getElementById('todoList');
@@ -205,16 +207,22 @@
     function removeTodo(i) { todos.splice(i, 1); renderTodos(); }
     renderTodos();
 
+    // 初期設定と状態管理
     const systemSounds = [{name:"Sound 01",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A2.mp3"},{name:"Sound 02",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A15.mp3"},{name:"Sound 03",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%AD%A3%E8%A7%A37.mp3"},{name:"Sound 04",url:"https://www.springin.org/wp-content/uploads/2022/06/%E5%87%BA%E9%A1%8C3.mp3"}];
     const STORAGE_KEY = 'rokudoro_config';
     let player, timerId = null, state = 'focus', currentSet = 1;
     let savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
     let config = { focusM: savedConfig.focusM || 25, breakM: savedConfig.breakM || 5, longM: savedConfig.longM || 15, maxSets: savedConfig.maxSets || 4, autoStart: savedConfig.autoStart || false, alarmUrl: savedConfig.alarmUrl || systemSounds[0].url, alarmName: savedConfig.alarmName || systemSounds[0].name, alarmVol: savedConfig.alarmVol || 0.5, currentVid: savedConfig.currentVid || 'jfKfPfyJRdk', ytVol: savedConfig.ytVol || 50 };
-    let timeLeft = config.focusM * 60;
     
+    // タイマー計算用
+    let timeLeft = config.focusM * 60;
+    let endTime = null; 
+
     let playlist = JSON.parse(localStorage.getItem('roku_playlist')) || [{ id: 'jfKfPfyJRdk', title: 'lofi hip hop radio 📚 relax/study' }];
 
     function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
+    
+    // YouTube API
     let tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
     function onYouTubeIframeAPIReady() { player = new YT.Player('player', { videoId: config.currentVid, playerVars: { 'autoplay': 0, 'playsinline': 1, 'modestbranding': 1 }, events: { 'onReady': (e) => { e.target.setVolume(config.ytVol); renderPlaylist(); } } }); }
 
@@ -245,6 +253,7 @@
     }
     function removeVideo(i) { playlist.splice(i, 1); localStorage.setItem('roku_playlist', JSON.stringify(playlist)); renderPlaylist(); }
 
+    // ポモドーロ・フェーズ管理
     function moveNextPhase(playSound = true) {
         if(playSound) { const a = document.getElementById('alarmAudio'); a.src = config.alarmUrl; a.volume = config.alarmVol; a.play(); }
         if(state === 'focus') { if(currentSet >= config.maxSets) { state = 'longBreak'; timeLeft = config.longM * 60; } else { state = 'break'; timeLeft = config.breakM * 60; } }
@@ -252,13 +261,32 @@
         updDisp(); if(config.autoStart) startTimer(); else updateIcons(false);
     }
 
-    function startTimer() { updateIcons(true); timerId = setInterval(() => { if(timeLeft > 0) { timeLeft--; updDisp(); } else { clearInterval(timerId); moveNextPhase(true); } }, 1000); }
+    // ずれにくいタイマー (絶対時間との差分を計算)
+    function startTimer() {
+        updateIcons(true);
+        endTime = Date.now() + (timeLeft * 1000);
+        timerId = setInterval(() => {
+            const now = Date.now();
+            const diff = Math.round((endTime - now) / 1000);
+            if(diff > 0) {
+                timeLeft = diff;
+                updDisp();
+            } else {
+                clearInterval(timerId);
+                timerId = null;
+                timeLeft = 0;
+                updDisp();
+                moveNextPhase(true);
+            }
+        }, 200);
+    }
+
     function resetT() { clearInterval(timerId); timerId = null; state = 'focus'; currentSet = 1; timeLeft = config.focusM * 60; updDisp(); updateIcons(false); }
     function skipStep() { clearInterval(timerId); timerId = null; moveNextPhase(false); }
     function updateIcons(run) { document.getElementById('playIcon').style.display = run ? 'none' : 'block'; document.getElementById('pauseIcon').style.display = run ? 'block' : 'none'; }
     
     function updDisp() {
-        const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+        const m = Math.floor(Math.max(0, timeLeft) / 60), s = Math.max(0, timeLeft) % 60;
         const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         document.getElementById('disp').innerText = timeStr;
         document.getElementById('statusTag').innerText = state.toUpperCase();
@@ -266,6 +294,7 @@
         document.title = `${timeStr} - RokuDoro`;
     }
 
+    // アラーム音設定
     const alarmContainer = document.getElementById('alarmOptions');
     systemSounds.forEach(s => {
         const div = document.createElement('div'); div.className = 'sound-opt'; div.innerText = s.name;
@@ -278,6 +307,7 @@
         alarmContainer.appendChild(div);
     });
 
+    // UI初期化とイベント
     function initUI() {
         document.getElementById('fSlider').oninput = e => { config.focusM = e.target.value; document.getElementById('fVal').innerText = e.target.value+'M'; saveToStorage(); if(state==='focus') resetT(); };
         document.getElementById('bSlider').oninput = e => { config.breakM = e.target.value; document.getElementById('bVal').innerText = e.target.value+'M'; saveToStorage(); };
