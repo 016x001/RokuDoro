@@ -49,7 +49,6 @@
         .status-tag { font-size: 22px; margin-top: 4px; }
         .set-display { font-size: 18px; margin-top: 4px; color: var(--text-dim); }
 
-        /* フェーズ切り替えボタンのスタイル */
         .phase-switch-group { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
         .btn-phase { background: #111; border: 1px solid var(--border); color: var(--text-dim); border-radius: 12px; padding: 6px 12px; font-size: 10px; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.2s; font-family: 'Share Tech Mono', monospace; }
         .btn-phase:hover { border-color: var(--accent); color: var(--text-main); }
@@ -57,10 +56,11 @@
 
         .label { font-size: 10px; color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase; font-weight: 900; display: block; margin-bottom: 8px; }
         
-        .controls { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 10px; margin-bottom: 0; padding-bottom: 5px; }
+        .controls { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 10px; margin-bottom: 20px; padding-bottom: 5px; }
         .btn-icon { background: transparent; border: 1px solid var(--border); border-radius: 16px; padding: 12px; cursor: pointer; color: var(--accent); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-icon svg { width: 18px; height: 18px; }
         .btn-icon.main { background: var(--accent); color: #000; border: none; }
+        .btn-icon:disabled { opacity: 0.2; cursor: not-allowed; }
 
         .config-panel { flex-grow: 1; border-radius: 32px; overflow-y: auto; scrollbar-width: none; padding: 20px 25px; }
         .setting-item { margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #111; }
@@ -80,6 +80,7 @@
         input[type="text"] { background: #000; border: 1px solid var(--border); border-radius: 10px; color: #fff; padding: 8px 12px; font-size: 11px; outline: none; flex: 1; min-width: 0; }
         .add-mini-btn { background: #222; color: #fff; border: none; border-radius: 10px; padding: 0 15px; font-size: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
 
+        /* 動画リストのスタイル指定に戻す */
         .list-item { font-size: 11px; padding: 10px; color: #aaa; cursor: move; border-radius: 16px; margin-bottom: 8px; background: #111; border: 1px solid #222; display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .list-item.dragging { opacity: 0.5; }
         .list-item.active { background: #fff; color: #000; }
@@ -91,7 +92,6 @@
         .todo-list { margin-top: 15px; overflow-y: auto; scrollbar-width: none; }
 
         .todo-item { display: flex; align-items: center; gap: 12px; padding: 10px 15px; margin-bottom: 8px; background: #111; border: 1px solid #222; border-radius: 16px; font-size: 13px; width: 100%; box-sizing: border-box; transition: 0.3s; cursor: move; }
-        .todo-item.dragging { opacity: 0.5; }
         .todo-item.done { opacity: 0.4; text-decoration: line-through; color: var(--text-dim); }
         .custom-checkbox { width: 18px; height: 18px; border: 2px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; background: #000; flex-shrink: 0; }
         .custom-checkbox.checked { background: #fff; border-color: #fff; }
@@ -134,28 +134,29 @@
 
     <div class="timer-side">
         <div class="panel">
-            <span class="label" style="text-align:center">RokuDoro Focus</span>
+            <span class="label" id="timerTitle" style="text-align:center">RokuDoro Focus</span>
             <div class="timer-container">
                 <div class="timer-display pixel-font" id="disp">25:00</div>
-                <div class="status-tag pixel-font" id="statusTag" style="text-align:center">Ready</div>
+                <div class="status-tag pixel-font" id="statusTag" style="text-align:center">FOCUS</div>
                 <div class="set-display pixel-font" id="setLabel" style="text-align:center;">SET 1 / 4</div>
             </div>
 
-            <div class="phase-switch-group">
+            <div class="phase-switch-group" id="phaseGroup">
                 <button class="btn-phase" id="btnFocus" onclick="forcePhase('focus')">Focus</button>
                 <button class="btn-phase" id="btnBreak" onclick="forcePhase('break')">Break</button>
                 <button class="btn-phase" id="btnLong" onclick="forcePhase('longBreak')">Long</button>
             </div>
 
-            <div class="controls">
-                <button class="btn-icon" onclick="resetT()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></button>
-                <button class="btn-icon main" id="startBtn"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg><svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
-                <button class="btn-icon" onclick="skipStep()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
+            <div class="controls" id="timerControls">
+                <button class="btn-icon" id="resetBtn" onclick="resetT()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></button>
+                <button class="btn-icon main" id="startBtn" onclick="toggleTimer()"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg><svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg></button>
+                <button class="btn-icon" id="skipBtn" onclick="skipStep()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg></button>
             </div>
         </div>
 
         <div class="panel config-panel">
             <span class="label">Settings</span>
+            <div class="setting-item compact"><div class="setting-header"><span class="setting-label-text">🕒 Time Sync (AUTO)</span><label class="switch"><input type="checkbox" id="timeSyncToggle"><span class="slider-round"></span></label></div></div>
             <div class="setting-item compact"><div class="setting-header"><span class="setting-label-text">⚡ Auto Start</span><label class="switch"><input type="checkbox" id="autoStartToggle"><span class="slider-round"></span></label></div></div>
             <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🎯 Focus</span><span id="fVal" class="setting-value-text pixel-font">25M</span></div><input type="range" id="fSlider" min="1" max="60" value="25"></div>
             <div class="setting-item"><div class="setting-header"><span class="setting-label-text">☕ Break</span><span id="bVal" class="setting-value-text pixel-font">5M</span></div><input type="range" id="bSlider" min="1" max="30" value="5"></div>
@@ -187,51 +188,130 @@
 <audio id="alarmAudio" preload="auto"></audio>
 
 <script>
+    const systemSounds = [{name:"Sound 01",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A2.mp3"},{name:"Sound 02",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A15.mp3"},{name:"Sound 03",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%AD%A3%E8%A7%A37.mp3"},{name:"Sound 04",url:"https://www.springin.org/wp-content/uploads/2022/06/%E5%87%BA%E9%A1%8C3.mp3"}];
+    const STORAGE_KEY = 'rokudoro_config';
+    let player, timerId = null, state = 'focus', currentSet = 1;
+    let savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    let config = { 
+        focusM: savedConfig.focusM || 25, breakM: savedConfig.breakM || 5, longM: savedConfig.longM || 15, maxSets: savedConfig.maxSets || 4, 
+        autoStart: savedConfig.autoStart || false, timeSync: savedConfig.timeSync || false,
+        alarmUrl: savedConfig.alarmUrl || systemSounds[0].url, alarmName: savedConfig.alarmName || systemSounds[0].name, 
+        alarmVol: savedConfig.alarmVol || 0.5, currentVid: savedConfig.currentVid || 'jfKfPfyJRdk', ytVol: savedConfig.ytVol || 50 
+    };
+    let timeLeft = config.focusM * 60;
+    
+    // 指定されたプレイリスト仕様に戻す
+    let playlist = JSON.parse(localStorage.getItem('roku_playlist')) || [{ id: 'jfKfPfyJRdk', title: 'lofi hip hop radio 📚 relax/study' }];
+
     function updateClock() {
         const now = new Date();
         const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
         document.getElementById('clockDate').innerText = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${days[now.getDay()]}`;
         document.getElementById('clockTime').innerText = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        if (config.timeSync) syncToClock();
     }
     setInterval(updateClock, 1000); updateClock();
 
-    let todos = JSON.parse(localStorage.getItem('roku_todos')) || [];
-    function renderTodos() {
-        const list = document.getElementById('todoList');
-        list.innerHTML = '';
-        todos.forEach((t, i) => {
-            const div = document.createElement('div');
-            div.className = `todo-item ${t.done ? 'done' : ''}`;
-            div.draggable = true;
-            div.innerHTML = `<div class="custom-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTodo(${i})"></div><span style="flex:1;">${t.text}</span><div style="color:#444; cursor:pointer; font-size:16px;" onclick="removeTodo(${i})">×</div>`;
-            div.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', i); div.classList.add('dragging'); });
-            div.addEventListener('dragend', () => div.classList.remove('dragging'));
-            div.addEventListener('dragover', (e) => e.preventDefault());
-            div.addEventListener('drop', (e) => { e.preventDefault(); const fromIndex = parseInt(e.dataTransfer.getData('text/plain')); const toIndex = i; if (fromIndex !== toIndex) { const movedItem = todos.splice(fromIndex, 1)[0]; todos.splice(toIndex, 0, movedItem); renderTodos(); } });
-            list.appendChild(div);
-        });
-        localStorage.setItem('roku_todos', JSON.stringify(todos));
+    function syncToClock() {
+        const now = new Date();
+        const min = now.getMinutes();
+        const sec = now.getSeconds();
+        const totalSec = (min % 30) * 60 + sec;
+        const focusLimit = config.focusM * 60;
+
+        let newState = (totalSec < focusLimit) ? 'focus' : 'break';
+        let newTime = (totalSec < focusLimit) ? (focusLimit - totalSec) : (1800 - totalSec);
+
+        if (state !== newState) {
+            const a = document.getElementById('alarmAudio');
+            a.src = config.alarmUrl; a.volume = config.alarmVol; a.play();
+        }
+
+        state = newState;
+        timeLeft = newTime;
+        currentSet = (Math.floor((now.getHours() * 60 + now.getMinutes()) / 30) % config.maxSets) + 1;
+        updDisp();
+        updateIcons(true);
     }
-    function addTodo() { const input = document.getElementById('todoInput'); if(!input.value) return; todos.push({text: input.value, done: false}); input.value = ''; renderTodos(); }
-    function toggleTodo(i) { todos[i].done = !todos[i].done; renderTodos(); }
-    function removeTodo(i) { todos.splice(i, 1); renderTodos(); }
-    renderTodos();
 
-    const systemSounds = [{name:"Sound 01",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A2.mp3"},{name:"Sound 02",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A15.mp3"},{name:"Sound 03",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%AD%A3%E8%A7%A37.mp3"},{name:"Sound 04",url:"https://www.springin.org/wp-content/uploads/2022/06/%E5%87%BA%E9%A1%8C3.mp3"}];
-    const STORAGE_KEY = 'rokudoro_config';
-    let player, timerId = null, state = 'focus', currentSet = 1;
-    let savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    let config = { focusM: savedConfig.focusM || 25, breakM: savedConfig.breakM || 5, longM: savedConfig.longM || 15, maxSets: savedConfig.maxSets || 4, autoStart: savedConfig.autoStart || false, alarmUrl: savedConfig.alarmUrl || systemSounds[0].url, alarmName: savedConfig.alarmName || systemSounds[0].name, alarmVol: savedConfig.alarmVol || 0.5, currentVid: savedConfig.currentVid || 'jfKfPfyJRdk', ytVol: savedConfig.ytVol || 50 };
-    
-    let timeLeft = config.focusM * 60;
-    let endTime = null; 
+    function toggleTimer() {
+        if (config.timeSync) return;
+        if (timerId) { clearInterval(timerId); timerId = null; updateIcons(false); } 
+        else { startTimer(); }
+    }
 
-    let playlist = JSON.parse(localStorage.getItem('roku_playlist')) || [{ id: 'jfKfPfyJRdk', title: 'lofi hip hop radio 📚 relax/study' }];
+    function startTimer() {
+        updateIcons(true);
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(() => {
+            if (timeLeft > 0) { timeLeft--; updDisp(); } 
+            else { clearInterval(timerId); timerId = null; moveNextPhase(true); }
+        }, 1000);
+    }
+
+    function moveNextPhase(playSound = true) {
+        if (playSound) {
+            const a = document.getElementById('alarmAudio');
+            a.src = config.alarmUrl; a.volume = config.alarmVol; a.play();
+        }
+        if (state === 'focus') {
+            if (currentSet >= config.maxSets) { state = 'longBreak'; timeLeft = config.longM * 60; } 
+            else { state = 'break'; timeLeft = config.breakM * 60; }
+        } else {
+            if (state === 'longBreak') currentSet = 1; else currentSet++;
+            state = 'focus'; timeLeft = config.focusM * 60;
+        }
+        updDisp();
+        if (config.autoStart && !config.timeSync) startTimer(); else updateIcons(false);
+    }
+
+    function resetT() {
+        if (config.timeSync) return;
+        if (timerId) { clearInterval(timerId); timerId = null; }
+        state = 'focus'; currentSet = 1; timeLeft = config.focusM * 60;
+        updDisp(); updateIcons(false);
+    }
+
+    function forcePhase(newPhase) {
+        if (config.timeSync) return;
+        if (timerId) { clearInterval(timerId); timerId = null; }
+        state = newPhase;
+        if (state === 'focus') timeLeft = config.focusM * 60;
+        else if (state === 'break') timeLeft = config.breakM * 60;
+        else if (state === 'longBreak') timeLeft = config.longM * 60;
+        updDisp(); updateIcons(false);
+    }
+
+    function skipStep() {
+        if (config.timeSync) return;
+        if (timerId) { clearInterval(timerId); timerId = null; }
+        moveNextPhase(false);
+    }
+
+    function updDisp() {
+        const m = Math.floor(Math.max(0, timeLeft) / 60);
+        const s = Math.max(0, timeLeft) % 60;
+        const timeStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        document.getElementById('disp').innerText = timeStr;
+        document.getElementById('statusTag').innerText = state.toUpperCase();
+        document.getElementById('setLabel').innerText = `SET ${currentSet} / ${config.maxSets}`;
+        document.title = `${timeStr} - RokuDoro`;
+        updateIcons(timerId !== null);
+    }
+
+    function updateIcons(run) {
+        document.getElementById('playIcon').style.display = (run && !config.timeSync) ? 'none' : 'block';
+        document.getElementById('pauseIcon').style.display = (run && !config.timeSync) ? 'block' : 'none';
+        document.getElementById('btnFocus').className = 'btn-phase' + (state === 'focus' ? ' active' : '');
+        document.getElementById('btnBreak').className = 'btn-phase' + (state === 'break' ? ' active' : '');
+        document.getElementById('btnLong').className = 'btn-phase' + (state === 'longBreak' ? ' active' : '');
+    }
 
     function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
     let tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
     function onYouTubeIframeAPIReady() { player = new YT.Player('player', { videoId: config.currentVid, playerVars: { 'autoplay': 0, 'playsinline': 1, 'modestbranding': 1 }, events: { 'onReady': (e) => { e.target.setVolume(config.ytVol); renderPlaylist(); } } }); }
 
+    // 指定されたプレイリスト描画処理に戻す
     function renderPlaylist() {
         const container = document.getElementById('videoList'); container.innerHTML = '';
         playlist.forEach((vid, index) => {
@@ -259,107 +339,62 @@
     }
     function removeVideo(i) { playlist.splice(i, 1); localStorage.setItem('roku_playlist', JSON.stringify(playlist)); renderPlaylist(); }
 
-    function moveNextPhase(playSound = true) {
-        if(playSound) { const a = document.getElementById('alarmAudio'); a.src = config.alarmUrl; a.volume = config.alarmVol; a.play(); }
-        if(state === 'focus') { if(currentSet >= config.maxSets) { state = 'longBreak'; timeLeft = config.longM * 60; } else { state = 'break'; timeLeft = config.breakM * 60; } }
-        else { if(state === 'longBreak') currentSet = 1; else currentSet++; state = 'focus'; timeLeft = config.focusM * 60; }
-        updDisp(); if(config.autoStart) startTimer(); else updateIcons(false);
-    }
-
-    // フェーズ強制切り替え機能
-    function forcePhase(newPhase) {
-        clearInterval(timerId);
-        timerId = null;
-        state = newPhase;
-        if(state === 'focus') timeLeft = config.focusM * 60;
-        else if(state === 'break') timeLeft = config.breakM * 60;
-        else if(state === 'longBreak') timeLeft = config.longM * 60;
-        updDisp();
-        updateIcons(false);
-    }
-
-    function startTimer() {
-        updateIcons(true);
-        endTime = Date.now() + (timeLeft * 1000);
-        timerId = setInterval(() => {
-            const now = Date.now();
-            const diff = Math.round((endTime - now) / 1000);
-            if(diff > 0) {
-                timeLeft = diff;
-                updDisp();
-            } else {
-                clearInterval(timerId);
-                timerId = null;
-                timeLeft = 0;
-                updDisp();
-                moveNextPhase(true);
-            }
-        }, 200);
-    }
-
-    function resetT() { clearInterval(timerId); timerId = null; state = 'focus'; currentSet = 1; timeLeft = config.focusM * 60; updDisp(); updateIcons(false); }
-    function skipStep() { clearInterval(timerId); timerId = null; moveNextPhase(false); }
-    function updateIcons(run) { 
-        document.getElementById('playIcon').style.display = run ? 'none' : 'block'; 
-        document.getElementById('pauseIcon').style.display = run ? 'block' : 'none';
-        
-        // ボタンのアクティブ状態を更新
-        document.getElementById('btnFocus').className = 'btn-phase' + (state==='focus' ? ' active' : '');
-        document.getElementById('btnBreak').className = 'btn-phase' + (state==='break' ? ' active' : '');
-        document.getElementById('btnLong').className = 'btn-phase' + (state==='longBreak' ? ' active' : '');
-    }
-    
-    function updDisp() {
-        const m = Math.floor(Math.max(0, timeLeft) / 60), s = Math.max(0, timeLeft) % 60;
-        const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        document.getElementById('disp').innerText = timeStr;
-        document.getElementById('statusTag').innerText = state.toUpperCase();
-        document.getElementById('setLabel').innerText = `SET ${currentSet} / ${config.maxSets}`;
-        document.title = `${timeStr} - RokuDoro`;
-
-        // 停止中もボタンの状態を反映
-        if(!timerId) {
-            document.getElementById('btnFocus').className = 'btn-phase' + (state==='focus' ? ' active' : '');
-            document.getElementById('btnBreak').className = 'btn-phase' + (state==='break' ? ' active' : '');
-            document.getElementById('btnLong').className = 'btn-phase' + (state==='longBreak' ? ' active' : '');
-        }
-    }
-
-    const alarmContainer = document.getElementById('alarmOptions');
+    const alarmOptions = document.getElementById('alarmOptions');
     systemSounds.forEach(s => {
         const div = document.createElement('div'); div.className = 'sound-opt'; div.innerText = s.name;
-        div.onclick = (e) => {
-            config.alarmUrl = s.url; config.alarmName = s.name; saveToStorage();
-            document.getElementById('currentAlarmName').innerText = s.name;
-            const a = document.getElementById('alarmAudio'); a.src = s.url; a.volume = config.alarmVol; a.play();
-            e.stopPropagation();
-        };
-        alarmContainer.appendChild(div);
+        div.onclick = (e) => { config.alarmUrl = s.url; config.alarmName = s.name; saveToStorage(); document.getElementById('currentAlarmName').innerText = s.name; const a = document.getElementById('alarmAudio'); a.src = s.url; a.volume = config.alarmVol; a.play(); e.stopPropagation(); };
+        alarmOptions.appendChild(div);
     });
 
     function initUI() {
-        document.getElementById('fSlider').oninput = e => { config.focusM = e.target.value; document.getElementById('fVal').innerText = e.target.value+'M'; saveToStorage(); if(state==='focus') resetT(); };
+        document.getElementById('fSlider').value = config.focusM; document.getElementById('fVal').innerText = config.focusM+'M';
+        document.getElementById('bSlider').value = config.breakM; document.getElementById('bVal').innerText = config.breakM+'M';
+        document.getElementById('lbSlider').value = config.longM; document.getElementById('lbVal').innerText = config.longM+'M';
+        document.getElementById('sSlider').value = config.maxSets; document.getElementById('sVal').innerText = config.maxSets;
+        document.getElementById('autoStartToggle').checked = config.autoStart;
+        document.getElementById('timeSyncToggle').checked = config.timeSync;
+        document.getElementById('alarmVolSlider').value = config.alarmVol * 100;
+        document.getElementById('alarmVolVal').innerText = (config.alarmVol * 100)+'%';
+        document.getElementById('ytVolSlider').value = config.ytVol;
+        document.getElementById('currentAlarmName').innerText = config.alarmName;
+
+        document.getElementById('fSlider').oninput = e => { config.focusM = e.target.value; document.getElementById('fVal').innerText = e.target.value+'M'; saveToStorage(); if(!config.timeSync) resetT(); };
         document.getElementById('bSlider').oninput = e => { config.breakM = e.target.value; document.getElementById('bVal').innerText = e.target.value+'M'; saveToStorage(); };
         document.getElementById('lbSlider').oninput = e => { config.longM = e.target.value; document.getElementById('lbVal').innerText = e.target.value+'M'; saveToStorage(); };
         document.getElementById('sSlider').oninput = e => { config.maxSets = e.target.value; document.getElementById('sVal').innerText = e.target.value; saveToStorage(); updDisp(); };
-        document.getElementById('autoStartToggle').onchange = e => { config.autoStart = e.target.checked; saveToStorage(); };
+        document.getElementById('timeSyncToggle').onchange = e => {
+            config.timeSync = e.target.checked; saveToStorage();
+            const controls = ['startBtn', 'resetBtn', 'skipBtn'];
+            if (config.timeSync) { if (timerId) { clearInterval(timerId); timerId = null; } document.getElementById('timerTitle').innerText = "RokuDoro SYNC"; controls.forEach(id => document.getElementById(id).disabled = true); document.getElementById('phaseGroup').style.opacity = "0.3"; syncToClock(); } 
+            else { document.getElementById('timerTitle').innerText = "RokuDoro Focus"; controls.forEach(id => document.getElementById(id).disabled = false); document.getElementById('phaseGroup').style.opacity = "1"; updateIcons(false); resetT(); }
+        };
         document.getElementById('alarmVolSlider').oninput = e => { config.alarmVol = e.target.value / 100; document.getElementById('alarmVolVal').innerText = e.target.value + '%'; saveToStorage(); };
         document.getElementById('ytVolSlider').oninput = e => { config.ytVol = e.target.value; if(player) player.setVolume(e.target.value); saveToStorage(); };
-        
-        document.getElementById('fSlider').value = config.focusM; document.getElementById('fVal').innerText = config.focusM + 'M';
-        document.getElementById('bSlider').value = config.breakM; document.getElementById('bVal').innerText = config.breakM + 'M';
-        document.getElementById('lbSlider').value = config.longM; document.getElementById('lbVal').innerText = config.longM + 'M';
-        document.getElementById('sSlider').value = config.maxSets; document.getElementById('sVal').innerText = config.maxSets;
-        document.getElementById('autoStartToggle').checked = config.autoStart; document.getElementById('alarmVolSlider').value = config.alarmVol * 100;
-        document.getElementById('alarmVolVal').innerText = (config.alarmVol * 100) + '%';
-        document.getElementById('ytVolSlider').value = config.ytVol;
-        document.getElementById('currentAlarmName').innerText = config.alarmName;
+        if (config.timeSync) { document.getElementById('timerTitle').innerText = "RokuDoro SYNC"; ['startBtn', 'resetBtn', 'skipBtn'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('phaseGroup').style.opacity = "0.3"; }
         updDisp();
     }
     
-    document.getElementById('startBtn').onclick = () => timerId ? (clearInterval(timerId), timerId=null, updateIcons(false)) : startTimer();
+    let todos = JSON.parse(localStorage.getItem('roku_todos')) || [];
+    function renderTodos() {
+        const list = document.getElementById('todoList'); list.innerHTML = '';
+        todos.forEach((t, i) => {
+            const div = document.createElement('div'); div.className = `todo-item ${t.done ? 'done' : ''}`;
+            div.draggable = true;
+            div.innerHTML = `<div class="custom-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTodo(${i})"></div><span style="flex:1;">${t.text}</span><div style="color:#444; cursor:pointer;" onclick="removeTodo(${i})">×</div>`;
+            div.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', i); div.classList.add('dragging'); });
+            div.addEventListener('dragend', () => div.classList.remove('dragging'));
+            div.addEventListener('dragover', (e) => e.preventDefault());
+            div.addEventListener('drop', (e) => { e.preventDefault(); const fromIndex = parseInt(e.dataTransfer.getData('text/plain')); const toIndex = i; if (fromIndex !== toIndex) { const movedItem = todos.splice(fromIndex, 1)[0]; todos.splice(toIndex, 0, movedItem); renderTodos(); } });
+            list.appendChild(div);
+        });
+        localStorage.setItem('roku_todos', JSON.stringify(todos));
+    }
+    function addTodo() { const input = document.getElementById('todoInput'); if(!input.value) return; todos.push({text: input.value, done: false}); input.value = ''; renderTodos(); }
+    function toggleTodo(i) { todos[i].done = !todos[i].done; renderTodos(); }
+    function removeTodo(i) { todos.splice(i, 1); renderTodos(); }
+    
     const note = document.getElementById('noteArea'); note.value = localStorage.getItem('roku_note') || ''; note.oninput = () => localStorage.setItem('roku_note', note.value);
-
+    renderTodos();
     initUI();
 </script>
 </body>
