@@ -80,7 +80,6 @@
         input[type="text"] { background: #000; border: 1px solid var(--border); border-radius: 10px; color: #fff; padding: 8px 12px; font-size: 11px; outline: none; flex: 1; min-width: 0; }
         .add-mini-btn { background: #222; color: #fff; border: none; border-radius: 10px; padding: 0 15px; font-size: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
 
-        /* 動画リストのスタイル指定に戻す */
         .list-item { font-size: 11px; padding: 10px; color: #aaa; cursor: move; border-radius: 16px; margin-bottom: 8px; background: #111; border: 1px solid #222; display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .list-item.dragging { opacity: 0.5; }
         .list-item.active { background: #fff; color: #000; }
@@ -199,8 +198,6 @@
         alarmVol: savedConfig.alarmVol || 0.5, currentVid: savedConfig.currentVid || 'jfKfPfyJRdk', ytVol: savedConfig.ytVol || 50 
     };
     let timeLeft = config.focusM * 60;
-    
-    // 指定されたプレイリスト仕様に戻す
     let playlist = JSON.parse(localStorage.getItem('roku_playlist')) || [{ id: 'jfKfPfyJRdk', title: 'lofi hip hop radio 📚 relax/study' }];
 
     function updateClock() {
@@ -311,7 +308,6 @@
     let tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
     function onYouTubeIframeAPIReady() { player = new YT.Player('player', { videoId: config.currentVid, playerVars: { 'autoplay': 0, 'playsinline': 1, 'modestbranding': 1 }, events: { 'onReady': (e) => { e.target.setVolume(config.ytVol); renderPlaylist(); } } }); }
 
-    // 指定されたプレイリスト描画処理に戻す
     function renderPlaylist() {
         const container = document.getElementById('videoList'); container.innerHTML = '';
         playlist.forEach((vid, index) => {
@@ -354,7 +350,7 @@
         document.getElementById('autoStartToggle').checked = config.autoStart;
         document.getElementById('timeSyncToggle').checked = config.timeSync;
         document.getElementById('alarmVolSlider').value = config.alarmVol * 100;
-        document.getElementById('alarmVolVal').innerText = (config.alarmVol * 100)+'%';
+        document.getElementById('alarmVolVal').innerText = Math.round(config.alarmVol * 100)+'%';
         document.getElementById('ytVolSlider').value = config.ytVol;
         document.getElementById('currentAlarmName').innerText = config.alarmName;
 
@@ -368,7 +364,7 @@
             if (config.timeSync) { if (timerId) { clearInterval(timerId); timerId = null; } document.getElementById('timerTitle').innerText = "RokuDoro SYNC"; controls.forEach(id => document.getElementById(id).disabled = true); document.getElementById('phaseGroup').style.opacity = "0.3"; syncToClock(); } 
             else { document.getElementById('timerTitle').innerText = "RokuDoro Focus"; controls.forEach(id => document.getElementById(id).disabled = false); document.getElementById('phaseGroup').style.opacity = "1"; updateIcons(false); resetT(); }
         };
-        document.getElementById('alarmVolSlider').oninput = e => { config.alarmVol = e.target.value / 100; document.getElementById('alarmVolVal').innerText = e.target.value + '%'; saveToStorage(); };
+        document.getElementById('alarmVolSlider').oninput = e => { config.alarmVol = e.target.value / 100; document.getElementById('alarmVolVal').innerText = Math.round(config.alarmVol * 100) + '%'; saveToStorage(); };
         document.getElementById('ytVolSlider').oninput = e => { config.ytVol = e.target.value; if(player) player.setVolume(e.target.value); saveToStorage(); };
         if (config.timeSync) { document.getElementById('timerTitle').innerText = "RokuDoro SYNC"; ['startBtn', 'resetBtn', 'skipBtn'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('phaseGroup').style.opacity = "0.3"; }
         updDisp();
