@@ -97,6 +97,9 @@
         .custom-checkbox.checked { background: #fff; border-color: #fff; }
         .custom-checkbox.checked::after { content: '✓'; color: #000; font-size: 12px; font-weight: bold; }
         
+        .todo-text { flex: 1; outline: none; transition: 0.2s; word-break: break-all; }
+        .todo-text[contenteditable="true"] { background: #222; padding: 2px 5px; border-radius: 4px; color: #fff; cursor: text; }
+
         .color-selector-btn { width: 24px; height: 24px; border-radius: 8px; border: 1px solid #333; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
         .color-dot { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; border: 1px solid #333; flex-shrink: 0; }
 
@@ -372,7 +375,7 @@
         updateNewTodoColorBtn();
     }
     
-    // ToDoリストのプロジェクトカラー設定
+    // ToDoリストの設定
     const projectColors = ['#ffffff', '#FF4C86', '#4C9FFF', '#FFC64A']; 
     let selectedColorIndex = 0;
     let todos = JSON.parse(localStorage.getItem('roku_todos')) || [];
@@ -395,7 +398,11 @@
             div.draggable = true;
             div.innerHTML = `
                 <div class="custom-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTodo(${i})"></div>
-                <span style="flex:1;">${t.text}</span>
+                <span class="todo-text" 
+                      id="todo-text-${i}"
+                      ondblclick="editTodo(${i})" 
+                      onblur="saveTodoEdit(${i})" 
+                      onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${t.text}</span>
                 <div class="color-dot" style="background:${t.color || projectColors[0]}" onclick="cycleColor(${i})"></div>
                 <div style="color:#444; cursor:pointer; font-size:16px; margin-left:5px;" onclick="removeTodo(${i})">×</div>
             `;
@@ -406,6 +413,26 @@
             list.appendChild(div);
         });
         localStorage.setItem('roku_todos', JSON.stringify(todos));
+    }
+
+    function editTodo(i) {
+        const span = document.getElementById(`todo-text-${i}`);
+        span.contentEditable = "true";
+        span.focus();
+        // カーソルを末尾へ
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(span);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    function saveTodoEdit(i) {
+        const span = document.getElementById(`todo-text-${i}`);
+        span.contentEditable = "false";
+        todos[i].text = span.innerText.trim() || "New Task";
+        renderTodos();
     }
 
     function cycleColor(index) {
