@@ -91,7 +91,7 @@
         .todo-input-group { display: flex; gap: 8px; width: 100%; box-sizing: border-box; align-items: center; }
         .todo-list { margin-top: 15px; overflow-y: auto; scrollbar-width: none; }
 
-        .todo-item { display: flex; align-items: center; gap: 12px; padding: 10px 15px; margin-bottom: 8px; background: #111; border: 1px solid #222; border-left: 6px solid #333; border-radius: 12px; font-size: 13px; width: 100%; box-sizing: border-box; transition: 0.3s; cursor: move; color: #ccc; }
+        .todo-item { display: flex; align-items: center; gap: 12px; padding: 6px 15px; margin-bottom: 5px; background: #111; border: 1px solid #222; border-left: 6px solid #333; border-radius: 12px; font-size: 13px; width: 100%; box-sizing: border-box; transition: 0.3s; cursor: move; color: #ccc; }
         .todo-item.done { opacity: 0.4; text-decoration: line-through; color: #777; }
         .custom-checkbox { width: 18px; height: 18px; border: 2px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; background: #000; flex-shrink: 0; }
         .custom-checkbox.checked { background: #fff; border-color: #fff; }
@@ -373,7 +373,6 @@
     }
     
     // ToDoリストのプロジェクトカラー設定
-    // 明るいグレーを #ffffff に変更
     const projectColors = ['#ffffff', '#FF4C86', '#4C9FFF', '#FFC64A']; 
     let selectedColorIndex = 0;
     let todos = JSON.parse(localStorage.getItem('roku_todos')) || [];
