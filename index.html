@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RokuDoro</title>
+    <title>RokuDoro perfect</title>
     
     <meta property="og:title" content="RokuDoro">
     <meta property="og:type" content="website">
@@ -68,6 +68,7 @@
         
         .setting-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .setting-label-text { font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 900; }
+        .setting-label-text:after { content: ""; }
         .setting-value-text { font-size: 18px; color: var(--text-main); }
         
         .video-container { width: 100%; aspect-ratio: 16/9; border-radius: 24px; overflow: hidden; background: #000; border: 1px solid var(--border); position: relative; flex-shrink: 0; }
@@ -87,14 +88,17 @@
         
         textarea { width: 100%; height: 100%; background: transparent; border: none; color: #ccc; resize: none; font-size: 15px; outline: none; line-height: 1.6; font-family: 'Share Tech Mono', monospace; }
         
-        .todo-input-group { display: flex; gap: 8px; width: 100%; box-sizing: border-box; }
+        .todo-input-group { display: flex; gap: 8px; width: 100%; box-sizing: border-box; align-items: center; }
         .todo-list { margin-top: 15px; overflow-y: auto; scrollbar-width: none; }
 
-        .todo-item { display: flex; align-items: center; gap: 12px; padding: 10px 15px; margin-bottom: 8px; background: #111; border: 1px solid #222; border-radius: 16px; font-size: 13px; width: 100%; box-sizing: border-box; transition: 0.3s; cursor: move; }
-        .todo-item.done { opacity: 0.4; text-decoration: line-through; color: var(--text-dim); }
+        .todo-item { display: flex; align-items: center; gap: 12px; padding: 10px 15px; margin-bottom: 8px; background: #111; border: 1px solid #222; border-left: 6px solid #333; border-radius: 12px; font-size: 13px; width: 100%; box-sizing: border-box; transition: 0.3s; cursor: move; color: #ccc; }
+        .todo-item.done { opacity: 0.4; text-decoration: line-through; color: #777; }
         .custom-checkbox { width: 18px; height: 18px; border: 2px solid #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; background: #000; flex-shrink: 0; }
         .custom-checkbox.checked { background: #fff; border-color: #fff; }
         .custom-checkbox.checked::after { content: '✓'; color: #000; font-size: 12px; font-weight: bold; }
+        
+        .color-selector-btn { width: 24px; height: 24px; border-radius: 8px; border: 1px solid #333; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; border: 1px solid #333; flex-shrink: 0; }
 
         .switch { position: relative; display: inline-block; width: 36px; height: 18px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -171,6 +175,7 @@
         <div class="panel todo-panel">
             <span class="label">ToDo List</span>
             <div class="todo-input-group">
+                <div id="newTodoColor" class="color-selector-btn" onclick="cycleNewTodoColor()"></div>
                 <input type="text" id="todoInput" placeholder="Add task..." onkeydown="if(event.key==='Enter') addTodo()">
                 <button class="add-mini-btn" onclick="addTodo()">ADD</button>
             </div>
@@ -215,15 +220,12 @@
         const sec = now.getSeconds();
         const totalSec = (min % 30) * 60 + sec;
         const focusLimit = config.focusM * 60;
-
         let newState = (totalSec < focusLimit) ? 'focus' : 'break';
         let newTime = (totalSec < focusLimit) ? (focusLimit - totalSec) : (1800 - totalSec);
-
         if (state !== newState) {
             const a = document.getElementById('alarmAudio');
             a.src = config.alarmUrl; a.volume = config.alarmVol; a.play();
         }
-
         state = newState;
         timeLeft = newTime;
         currentSet = (Math.floor((now.getHours() * 60 + now.getMinutes()) / 30) % config.maxSets) + 1;
@@ -318,7 +320,7 @@
             div.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/vidx', index); div.classList.add('dragging'); });
             div.addEventListener('dragend', () => div.classList.remove('dragging'));
             div.addEventListener('dragover', (e) => e.preventDefault());
-            div.addEventListener('drop', (e) => { e.preventDefault(); const fromIdx = parseInt(e.dataTransfer.getData('text/vidx')); const toIdx = index; if (!isNaN(fromIdx) && fromIdx !== toIdx) { const movedVid = playlist.splice(fromIdx, 1)[0]; playlist.splice(toIdx, 0, movedVid); localStorage.setItem('roku_playlist', JSON.stringify(playlist)); renderPlaylist(); } });
+            div.addEventListener('drop', (e) => { e.preventDefault(); const fromIdx = parseInt(e.dataTransfer.getData('text/vidx')); if (!isNaN(fromIdx) && fromIdx !== index) { const moved = playlist.splice(fromIdx, 1)[0]; playlist.splice(index, 0, moved); localStorage.setItem('roku_playlist', JSON.stringify(playlist)); renderPlaylist(); } });
             container.appendChild(div);
         });
     }
@@ -360,32 +362,69 @@
         document.getElementById('sSlider').oninput = e => { config.maxSets = e.target.value; document.getElementById('sVal').innerText = e.target.value; saveToStorage(); updDisp(); };
         document.getElementById('timeSyncToggle').onchange = e => {
             config.timeSync = e.target.checked; saveToStorage();
-            const controls = ['startBtn', 'resetBtn', 'skipBtn'];
-            if (config.timeSync) { if (timerId) { clearInterval(timerId); timerId = null; } document.getElementById('timerTitle').innerText = "RokuDoro SYNC"; controls.forEach(id => document.getElementById(id).disabled = true); document.getElementById('phaseGroup').style.opacity = "0.3"; syncToClock(); } 
-            else { document.getElementById('timerTitle').innerText = "RokuDoro Focus"; controls.forEach(id => document.getElementById(id).disabled = false); document.getElementById('phaseGroup').style.opacity = "1"; updateIcons(false); resetT(); }
+            if (config.timeSync) { if (timerId) { clearInterval(timerId); timerId = null; } document.getElementById('timerTitle').innerText = "RokuDoro SYNC"; ['startBtn', 'resetBtn', 'skipBtn'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('phaseGroup').style.opacity = "0.3"; syncToClock(); } 
+            else { document.getElementById('timerTitle').innerText = "RokuDoro Focus"; ['startBtn', 'resetBtn', 'skipBtn'].forEach(id => document.getElementById(id).disabled = false); document.getElementById('phaseGroup').style.opacity = "1"; updateIcons(false); resetT(); }
         };
         document.getElementById('alarmVolSlider').oninput = e => { config.alarmVol = e.target.value / 100; document.getElementById('alarmVolVal').innerText = Math.round(config.alarmVol * 100) + '%'; saveToStorage(); };
         document.getElementById('ytVolSlider').oninput = e => { config.ytVol = e.target.value; if(player) player.setVolume(e.target.value); saveToStorage(); };
-        if (config.timeSync) { document.getElementById('timerTitle').innerText = "RokuDoro SYNC"; ['startBtn', 'resetBtn', 'skipBtn'].forEach(id => document.getElementById(id).disabled = true); document.getElementById('phaseGroup').style.opacity = "0.3"; }
+        
         updDisp();
+        updateNewTodoColorBtn();
     }
     
+    // ToDoリストのプロジェクトカラー設定
+    // 明るいグレーを #ffffff に変更
+    const projectColors = ['#ffffff', '#FF4C86', '#4C9FFF', '#FFC64A']; 
+    let selectedColorIndex = 0;
     let todos = JSON.parse(localStorage.getItem('roku_todos')) || [];
+
+    function updateNewTodoColorBtn() {
+        document.getElementById('newTodoColor').style.background = projectColors[selectedColorIndex];
+    }
+
+    function cycleNewTodoColor() {
+        selectedColorIndex = (selectedColorIndex + 1) % projectColors.length;
+        updateNewTodoColorBtn();
+    }
+
     function renderTodos() {
         const list = document.getElementById('todoList'); list.innerHTML = '';
         todos.forEach((t, i) => {
-            const div = document.createElement('div'); div.className = `todo-item ${t.done ? 'done' : ''}`;
+            const div = document.createElement('div'); 
+            div.className = `todo-item ${t.done ? 'done' : ''}`;
+            div.style.borderLeftColor = t.color || projectColors[0];
             div.draggable = true;
-            div.innerHTML = `<div class="custom-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTodo(${i})"></div><span style="flex:1;">${t.text}</span><div style="color:#444; cursor:pointer;" onclick="removeTodo(${i})">×</div>`;
+            div.innerHTML = `
+                <div class="custom-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTodo(${i})"></div>
+                <span style="flex:1;">${t.text}</span>
+                <div class="color-dot" style="background:${t.color || projectColors[0]}" onclick="cycleColor(${i})"></div>
+                <div style="color:#444; cursor:pointer; font-size:16px; margin-left:5px;" onclick="removeTodo(${i})">×</div>
+            `;
             div.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', i); div.classList.add('dragging'); });
             div.addEventListener('dragend', () => div.classList.remove('dragging'));
             div.addEventListener('dragover', (e) => e.preventDefault());
-            div.addEventListener('drop', (e) => { e.preventDefault(); const fromIndex = parseInt(e.dataTransfer.getData('text/plain')); const toIndex = i; if (fromIndex !== toIndex) { const movedItem = todos.splice(fromIndex, 1)[0]; todos.splice(toIndex, 0, movedItem); renderTodos(); } });
+            div.addEventListener('drop', (e) => { e.preventDefault(); const fromIdx = parseInt(e.dataTransfer.getData('text/plain')); if (fromIdx !== i) { const moved = todos.splice(fromIdx, 1)[0]; todos.splice(i, 0, moved); renderTodos(); } });
             list.appendChild(div);
         });
         localStorage.setItem('roku_todos', JSON.stringify(todos));
     }
-    function addTodo() { const input = document.getElementById('todoInput'); if(!input.value) return; todos.push({text: input.value, done: false}); input.value = ''; renderTodos(); }
+
+    function cycleColor(index) {
+        let currentColor = todos[index].color || projectColors[0];
+        let colorIdx = projectColors.indexOf(currentColor);
+        if (colorIdx === -1) colorIdx = 0;
+        let nextIdx = (colorIdx + 1) % projectColors.length;
+        todos[index].color = projectColors[nextIdx];
+        renderTodos();
+    }
+
+    function addTodo() { 
+        const input = document.getElementById('todoInput'); 
+        if(!input.value) return; 
+        todos.push({text: input.value, done: false, color: projectColors[selectedColorIndex]}); 
+        input.value = ''; 
+        renderTodos(); 
+    }
     function toggleTodo(i) { todos[i].done = !todos[i].done; renderTodos(); }
     function removeTodo(i) { todos.splice(i, 1); renderTodos(); }
     
