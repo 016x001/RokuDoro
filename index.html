@@ -133,8 +133,8 @@
         .clock-date { font-size: 22px; color: var(--text-main); letter-spacing: 1px; }
         .clock-time { font-size: 22px; color: var(--text-main); }
 
-        .notes-panel { height: 40%; display: flex; flex-direction: column; border-radius: 32px; }
-        .todo-panel { height: 60%; display: flex; flex-direction: column; border-radius: 32px; }
+        .notes-panel { height: 35%; display: flex; flex-direction: column; border-radius: 32px; }
+        .todo-panel { height: 65%; display: flex; flex-direction: column; border-radius: 32px; }
 
         /* ── フローティングウィンドウ共通 ── */
         .float-win {
@@ -279,8 +279,8 @@
         .config-overlay.open { display: block; }
 
         /* メモ・Todo 折り畳み */
-        .notes-panel { height: 40%; flex: 0 0 40%; display: flex; flex-direction: column; border-radius: 32px; transition: flex 0.3s ease; overflow: hidden; }
-        .todo-panel  { height: 60%; flex: 1 1 60%; display: flex; flex-direction: column; border-radius: 32px; transition: flex 0.3s ease; overflow: hidden; }
+        .notes-panel { height: 35%; flex: 0 0 35%; display: flex; flex-direction: column; border-radius: 32px; transition: flex 0.3s ease; overflow: hidden; }
+        .todo-panel  { height: 65%; flex: 1 1 65%; display: flex; flex-direction: column; border-radius: 32px; transition: flex 0.3s ease; overflow: hidden; }
         .notes-panel.collapsed { flex: 0 0 44px !important; }
         .todo-panel.collapsed  { flex: 0 0 44px !important; }
         .notes-panel.collapsed textarea { display: none; }
@@ -1316,7 +1316,6 @@
     }
 
     function initDirectEmbed(vidId) {
-        // YT.Player が使えない環境向けの直接埋め込み方式
         const wrapper = document.getElementById('ytPlayerWrapper');
         const embedUrl = `https://www.youtube.com/embed/${vidId}?autoplay=0&enablejsapi=1&playsinline=1&modestbranding=1`;
         wrapper.innerHTML = `<iframe id="ytDirectFrame" src="${embedUrl}" 
@@ -1328,10 +1327,29 @@
                 const url = `https://www.youtube.com/embed/${id}?autoplay=1&enablejsapi=1&playsinline=1&modestbranding=1`;
                 ytIframe.src = url;
             },
-            setVolume: () => {},
-            pauseVideo: () => { ytIframe.src = ytIframe.src; },
-            playVideo: () => {}
+            setVolume: (vol) => {
+                if (!ytIframe || !ytIframe.contentWindow) return;
+                ytIframe.contentWindow.postMessage(JSON.stringify({
+                    event: 'command', func: 'setVolume', args: [vol]
+                }), '*');
+            },
+            pauseVideo: () => {
+                if (!ytIframe || !ytIframe.contentWindow) return;
+                ytIframe.contentWindow.postMessage(JSON.stringify({
+                    event: 'command', func: 'pauseVideo', args: []
+                }), '*');
+            },
+            playVideo: () => {
+                if (!ytIframe || !ytIframe.contentWindow) return;
+                ytIframe.contentWindow.postMessage(JSON.stringify({
+                    event: 'command', func: 'playVideo', args: []
+                }), '*');
+            }
         };
+        // iframe読み込み後に初期音量を適用
+        ytIframe.addEventListener('load', () => {
+            setTimeout(() => player.setVolume(config.ytVol), 500);
+        });
         renderPlaylist();
         if(config.mediaMode === 'local') setMediaMode('local');
     }
