@@ -435,13 +435,6 @@
         .media-tab:hover { color: var(--text-main); }
         .media-tab.active { background: #222; color: var(--text-main); }
 
-        /* Local Visualizer */
-        .local-visualizer { position: absolute; top:0; left:0; width: 100%; height: 100%; background: #111; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 20px 11%; box-sizing: border-box; z-index: 10; color: #888; }
-        .local-visualizer.active { display: flex; }
-        .track-info-disp { font-size: 18px; font-weight: bold; color: #fff; letter-spacing: 1px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
-        .local-player-controls { width: 100%; display: flex; flex-direction: column; gap: 20px; }
-        .local-seekbar-row { width: 100%; display: flex; align-items: center; gap: 8px; }
-        
         .media-section { display: none; flex-direction: column; flex: 1; min-height: 0; }
         .media-section.active { display: flex; }
 
@@ -461,49 +454,12 @@
             <div class="video-container">
                 <div id="ytPlayerWrapper" class="video-player-frame"><div id="player"></div></div>
                 
-                <div id="localVisualizer" class="local-visualizer">
-                    <div id="mainLocalTrackTitle" class="track-info-disp">No track selected</div>
-                    
-                    <div class="local-player-controls">
-                        <!-- コントロール行: shuffle / prev / play / next / repeat -->
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1.5fr 1fr 1fr; gap:6px; align-items:center;">
-                            <button class="btn-icon" onclick="toggleShuffle()" id="btnShuffle" title="Shuffle">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
-                            </button>
-                            <button class="btn-icon" onclick="playPrevLocal()">
-                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                            </button>
-                            <button class="btn-icon main" onclick="toggleLocalPlay()" id="localMainPlayBtn">
-                                <svg id="lpPlay" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"></path></svg>
-                                <svg id="lpPause" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
-                            </button>
-                            <button class="btn-icon" onclick="playNextLocal()">
-                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                            </button>
-                            <button class="btn-icon" onclick="toggleRepeat()" id="btnRepeat" title="Repeat" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                                <span id="repeatText" style="font-size:9px; font-weight:bold; display:none; line-height:1;">1</span>
-                            </button>
-                        </div>
-                        <!-- シークバー行 -->
-                        <div class="local-seekbar-row">
-                            <span id="localCurrentTime" style="font-size:11px; color:#aaa; font-family:'Share Tech Mono',monospace; width:34px; text-align:right; flex-shrink:0;">0:00</span>
-                            <input type="range" id="localSeekbar" min="0" max="100" value="0" style="flex:1; margin:0;" onchange="seekLocalAudio(this.value)">
-                            <span id="localDuration" style="font-size:11px; color:#aaa; font-family:'Share Tech Mono',monospace; width:34px; text-align:left; flex-shrink:0;">0:00</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         
         <div class="video-controls-panel">
-            <div class="media-tabs">
-                <button class="media-tab active" id="tabYt" onclick="setMediaMode('yt')">📺 YouTube</button>
-                <button class="media-tab" id="tabLocal" onclick="setMediaMode('local')">🎵 Local Audio</button>
-            </div>
-
             <!-- YouTube Section -->
-            <div id="ytSection" class="media-section active">
+            <div id="ytSection" style="display:flex; flex-direction:column; flex:1; min-height:0;">
                 <div class="volume-box" style="flex-shrink:0;"><span class="label" style="margin:0">Vol</span><input type="range" id="ytVolSlider" min="0" max="100" value="50"></div>
                 <div class="url-group" style="flex-shrink:0;">
                     <input type="text" id="ytUrl" placeholder="YouTube URL..." onkeydown="if(event.key==='Enter') addNewVideo()">
@@ -511,28 +467,6 @@
                 </div>
                 <span class="label" style="flex-shrink:0;">Playlist</span>
                 <div class="video-list-container" id="videoList"></div>
-            </div>
-
-            <!-- Local Audio Section -->
-            <div id="localSection" class="media-section">
-                <div class="volume-box" style="margin-bottom:8px; flex-shrink:0;"><span class="label" style="margin:0">Vol</span><input type="range" id="localVolSlider" min="0" max="100" value="50"></div>
-                <div class="url-group" style="flex-shrink:0; display:flex; gap:8px; position:relative;">
-                    <input type="file" id="localFileInput" accept="audio/*" multiple style="display:none;" onchange="handleLocalFiles(event)">
-                    <input type="file" id="localFolderInput" accept="audio/*" webkitdirectory directory multiple style="display:none;" onchange="handleLocalFiles(event)">
-                    <div style="flex:1; position:relative;">
-                        <button class="btn-phase" id="localAddBtn" style="width:100%; padding:10px; font-size:12px; border:1px dashed #444;" onclick="toggleLocalAddMenu(event)">＋ Add Music ▾</button>
-                        <div id="localAddMenu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; width:100%; background:#1a1a1a; border:1px solid #333; border-radius:12px; overflow:hidden; z-index:50;">
-                            <div onclick="document.getElementById('localFileInput').click(); closeLocalAddMenu();" style="padding:11px 16px; font-size:12px; color:#aaa; cursor:pointer; transition:0.15s;" onmouseover="this.style.background='#2a2a2a'; this.style.color='#fff';" onmouseout="this.style.background=''; this.style.color='#aaa';">🎵 ファイルを追加</div>
-                            <div style="height:1px; background:#2a2a2a; margin:0 10px;"></div>
-                            <div onclick="document.getElementById('localFolderInput').click(); closeLocalAddMenu();" style="padding:11px 16px; font-size:12px; color:#aaa; cursor:pointer; transition:0.15s;" onmouseover="this.style.background='#2a2a2a'; this.style.color='#fff';" onmouseout="this.style.background=''; this.style.color='#aaa';">📁 フォルダを追加</div>
-                        </div>
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-shrink:0;">
-                    <span class="label" style="margin:0;">Local Playlist</span>
-                    <span id="localClearBtn" style="font-size:10px; color:#888; cursor:pointer; text-decoration:underline;" onclick="clearLocalPlaylist()">Clear</span>
-                </div>
-                <div class="video-list-container" id="localAudioList" style="margin-top:8px;"></div>
             </div>
         </div>
     </div>
@@ -779,7 +713,6 @@
 </footer>
 
 <audio id="alarmAudio" preload="auto"></audio>
-<audio id="localPlayer" style="display:none;"></audio>
 
 <script>
     const systemSounds = [{name:"Sound 01",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A2.mp3"},{name:"Sound 02",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%B1%BA%E5%AE%9A15.mp3"},{name:"Sound 03",url:"https://www.springin.org/wp-content/uploads/2022/06/%E6%AD%A3%E8%A7%A37.mp3"},{name:"Sound 04",url:"https://www.springin.org/wp-content/uploads/2022/06/%E5%87%BA%E9%A1%8C3.mp3"}];
@@ -791,7 +724,7 @@
         autoStart: savedConfig.autoStart || false, timeSync: savedConfig.timeSync || false,
         alarmUrl: savedConfig.alarmUrl || systemSounds[0].url, alarmName: savedConfig.alarmName || systemSounds[0].name, 
         alarmVol: savedConfig.alarmVol !== undefined ? savedConfig.alarmVol : 0.5, currentVid: savedConfig.currentVid || 'jfKfPfyJRdk', ytVol: savedConfig.ytVol || 50,
-        mediaMode: savedConfig.mediaMode || 'yt', localVol: savedConfig.localVol !== undefined ? savedConfig.localVol : 50,
+        mediaMode: savedConfig.mediaMode || 'yt',
         timerMode: savedConfig.timerMode || 'pomodoro', normalTimerInputVal: savedConfig.normalTimerInputVal || "10:00",
         ambientList: savedConfig.ambientList || [
             { id: 'rain',  name: 'Rain',  type: 'local', src: 'Ambient/VSQSE_rain_05.ogg',  vol: 30, playing: false, icon: '<path d="M16 13v8"/><path d="M8 13v8"/><path d="M12 15v8"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>' },
@@ -827,224 +760,6 @@
     let stopwatchLaps = [];
     let playlist = JSON.parse(localStorage.getItem('roku_playlist')) || [{ id: 'jfKfPfyJRdk', title: 'lofi hip hop radio 📚 relax/study' }];
     
-    // Local Audio State
-    let localFiles = [];
-    let currentLocalTrackIndex = -1;
-    let isShuffle = false;
-    let repeatMode = 0;
-    const localAudioEl = document.getElementById('localPlayer');
-
-    function toggleLocalAddMenu(e) {
-        e.stopPropagation();
-        const menu = document.getElementById('localAddMenu');
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-    }
-    function closeLocalAddMenu() {
-        document.getElementById('localAddMenu').style.display = 'none';
-    }
-    document.addEventListener('click', () => closeLocalAddMenu());
-
-    // ── IndexedDB setup ──────────────────────────────────────
-    const DB_NAME = 'RokuDoroDB', DB_VER = 1, STORE = 'localTracks';
-    let db = null;
-
-    function openDB() {
-        return new Promise((res, rej) => {
-            const req = indexedDB.open(DB_NAME, DB_VER);
-            req.onupgradeneeded = e => e.target.result.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
-            req.onsuccess = e => { db = e.target.result; res(db); };
-            req.onerror = () => rej(req.error);
-        });
-    }
-
-    async function dbSaveTrack(name, arrayBuffer) {
-        return new Promise((res, rej) => {
-            const tx = db.transaction(STORE, 'readwrite');
-            const req = tx.objectStore(STORE).add({ name, data: arrayBuffer });
-            req.onsuccess = () => res(req.result); // returns id
-            req.onerror = () => rej(req.error);
-        });
-    }
-
-    async function dbLoadAllTracks() {
-        return new Promise((res, rej) => {
-            const tx = db.transaction(STORE, 'readonly');
-            const req = tx.objectStore(STORE).getAll();
-            req.onsuccess = () => res(req.result);
-            req.onerror = () => rej(req.error);
-        });
-    }
-
-    async function dbDeleteTrack(id) {
-        return new Promise((res, rej) => {
-            const tx = db.transaction(STORE, 'readwrite');
-            const req = tx.objectStore(STORE).delete(id);
-            req.onsuccess = () => res();
-            req.onerror = () => rej(req.error);
-        });
-    }
-
-    async function dbClearAll() {
-        return new Promise((res, rej) => {
-            const tx = db.transaction(STORE, 'readwrite');
-            const req = tx.objectStore(STORE).clear();
-            req.onsuccess = () => res();
-            req.onerror = () => rej(req.error);
-        });
-    }
-
-    async function loadTracksFromDB() {
-        // 名前とIDだけ読み込み、バイナリ（ObjectURL）は再生時に生成するオンデマンド方式
-        const records = await dbLoadAllTracks();
-        localFiles = records.map(r => ({
-            id: r.id,
-            name: r.name,
-            url: null,      // 再生時にオンデマンドで生成
-            _dbData: r.data // バイナリは参照だけ保持
-        }));
-        renderLocalPlaylist();
-    }
-
-    async function getTrackUrl(index) {
-        const track = localFiles[index];
-        if (!track) return null;
-        // まだObjectURLが生成されていない場合のみ生成
-        if (!track.url) {
-            track.url = URL.createObjectURL(new Blob([track._dbData]));
-        }
-        return track.url;
-    }
-
-    // ── Shuffle queue (全曲消化まで重複なし) ─────────────────
-    let shuffleQueue = [];
-
-    function buildShuffleQueue(includeCurrentIndex = false) {
-        // includeCurrentIndex=false のとき現在曲を除外（通常の次曲キュー構築）
-        // includeCurrentIndex=true のとき全曲含める（全曲消化後の再構築）
-        const pool = [...Array(localFiles.length).keys()].filter(
-            i => includeCurrentIndex || i !== currentLocalTrackIndex
-        );
-        // Fisher-Yates shuffle
-        for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-        shuffleQueue = pool;
-    }
-
-    function toggleShuffle() {
-        isShuffle = !isShuffle;
-        if(isShuffle) {
-            buildShuffleQueue();
-            document.getElementById('btnShuffle').style.color = '#fff';
-            document.getElementById('btnShuffle').style.borderColor = '#fff';
-        } else {
-            shuffleQueue = [];
-            document.getElementById('btnShuffle').style.color = 'var(--accent)';
-            document.getElementById('btnShuffle').style.borderColor = 'var(--border)';
-        }
-    }
-
-    function toggleRepeat() {
-        repeatMode = (repeatMode + 1) % 3;
-        const btn = document.getElementById('btnRepeat');
-        const rTxt = document.getElementById('repeatText');
-        if(repeatMode === 0) {
-            btn.style.color = 'var(--accent)'; btn.style.borderColor = 'var(--border)'; rTxt.style.display = 'none';
-        } else if(repeatMode === 1) {
-            btn.style.color = '#fff'; btn.style.borderColor = '#fff'; rTxt.style.display = 'none';
-        } else {
-            btn.style.color = '#fff'; btn.style.borderColor = '#fff'; rTxt.style.display = 'inline';
-        }
-    }
-
-    localAudioEl.volume = config.localVol / 100;
-
-    localAudioEl.addEventListener('timeupdate', () => {
-        if(!isNaN(localAudioEl.duration)) {
-            const progress = (localAudioEl.currentTime / localAudioEl.duration) * 100;
-            document.getElementById('localSeekbar').value = progress;
-            document.getElementById('localCurrentTime').innerText = formatTime(localAudioEl.currentTime);
-            document.getElementById('localDuration').innerText = formatTime(localAudioEl.duration);
-        }
-    });
-
-    localAudioEl.addEventListener('ended', () => {
-        if(repeatMode === 2) { localAudioEl.currentTime = 0; localAudioEl.play(); }
-        else { playNextLocal(true); }
-    });
-    localAudioEl.addEventListener('play', () => {
-        document.getElementById('lpPlay').style.display = 'none';
-        document.getElementById('lpPause').style.display = 'block';
-    });
-    localAudioEl.addEventListener('pause', () => {
-        document.getElementById('lpPlay').style.display = 'block';
-        document.getElementById('lpPause').style.display = 'none';
-    });
-
-    async function handleLocalFiles(e) {
-        const files = Array.from(e.target.files);
-        if(files.length === 0) return;
-        const audioFiles = files.filter(f => f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|m4a|ogg|flac|aac)$/i));
-        if(audioFiles.length === 0) return;
-
-        for (const file of audioFiles) {
-            const buf = await file.arrayBuffer();
-            const id = await dbSaveTrack(file.name, buf);
-            localFiles.push({ id, name: file.name, url: URL.createObjectURL(new Blob([buf])) });
-        }
-
-        if (isShuffle) buildShuffleQueue();
-        renderLocalPlaylist();
-        if(currentLocalTrackIndex === -1 && localFiles.length > 0) playLocalTrack(0);
-        e.target.value = '';
-    }
-
-    function playNextLocal(auto = false) {
-        if(localFiles.length === 0) return;
-        if(isShuffle) {
-            if(shuffleQueue.length === 0) {
-                if(auto && repeatMode === 0) return; // 全曲終了・リピートなし → 停止
-                buildShuffleQueue(true); // 全曲消化 → 全曲含めて再シャッフル
-            }
-            playLocalTrack(shuffleQueue.shift());
-            return;
-        }
-        let nextIndex = currentLocalTrackIndex + 1;
-        if(nextIndex >= localFiles.length) {
-            if(auto && repeatMode === 0) return;
-            nextIndex = 0;
-        }
-        playLocalTrack(nextIndex);
-    }
-
-    async function removeLocalTrack(index) {
-        if(index === currentLocalTrackIndex) {
-            localAudioEl.pause();
-            currentLocalTrackIndex = -1;
-            document.getElementById('mainLocalTrackTitle').innerText = "No track selected";
-        } else if (index < currentLocalTrackIndex) {
-            currentLocalTrackIndex--;
-        }
-        const track = localFiles[index];
-        if (track.url) URL.revokeObjectURL(track.url);
-        await dbDeleteTrack(track.id);
-        localFiles.splice(index, 1);
-        if (isShuffle) buildShuffleQueue();
-        renderLocalPlaylist();
-    }
-
-    async function clearLocalPlaylist() {
-        localAudioEl.pause();
-        currentLocalTrackIndex = -1;
-        document.getElementById('mainLocalTrackTitle').innerText = "No track selected";
-        localFiles.forEach(t => { if (t.url) URL.revokeObjectURL(t.url); });
-        localFiles = [];
-        shuffleQueue = [];
-        await dbClearAll();
-        renderLocalPlaylist();
-    }
-
     const alarmAudio = document.getElementById('alarmAudio');
     alarmAudio.src = config.alarmUrl;
     alarmAudio.volume = config.alarmVol;
@@ -1290,7 +1005,6 @@
                 'onReady': (e) => { 
                     e.target.setVolume(config.ytVol); 
                     renderPlaylist(); 
-                    if(config.mediaMode === 'local') setMediaMode('local');
                 },
                 'onStateChange': (e) => {
                     if (e.data === YT.PlayerState.ENDED && config.mediaMode === 'yt') {
@@ -1337,98 +1051,12 @@
     function removeVideo(i) { playlist.splice(i, 1); localStorage.setItem('roku_playlist', JSON.stringify(playlist)); renderPlaylist(); }
 
     function setMediaMode(mode) {
-        config.mediaMode = mode;
+        // ローカル再生機能削除済み、YouTube専用
+        config.mediaMode = 'yt';
         saveToStorage();
-        
-        document.getElementById('tabYt').classList.toggle('active', mode === 'yt');
-        document.getElementById('tabLocal').classList.toggle('active', mode === 'local');
-
-        // インラインstyleを除去してCSSクラスだけで制御
-        const ytSec = document.getElementById('ytSection');
-        const localSec = document.getElementById('localSection');
-        ytSec.style.removeProperty('display');
-        localSec.style.removeProperty('display');
-        ytSec.classList.toggle('active', mode === 'yt');
-        localSec.classList.toggle('active', mode === 'local');
-        
-        if (mode === 'yt') {
-            document.getElementById('ytPlayerWrapper').style.opacity = '1';
-            document.getElementById('ytPlayerWrapper').style.pointerEvents = 'auto';
-            document.getElementById('localVisualizer').classList.remove('active');
-            localAudioEl.pause();
-            renderPlaylist();
-        } else {
-            document.getElementById('ytPlayerWrapper').style.opacity = '0';
-            document.getElementById('ytPlayerWrapper').style.pointerEvents = 'none';
-            document.getElementById('localVisualizer').classList.add('active');
-            if (player && typeof player.pauseVideo === 'function') {
-                player.pauseVideo();
-            }
-            renderPlaylist();
-            renderLocalPlaylist();
-        }
-    }
-
-    function renderLocalPlaylist() {
-        const container = document.getElementById('localAudioList'); 
-        container.innerHTML = '';
-        if(localFiles.length === 0) {
-            container.innerHTML = '<div style="color:#555; text-align:center; padding:20px 0; font-size:12px;">No local files selected.</div>';
-            return;
-        }
-        localFiles.forEach((track, index) => {
-            const div = document.createElement('div'); 
-            div.className = 'list-item' + ((index === currentLocalTrackIndex && config.mediaMode === 'local') ? ' active' : '');
-            div.innerHTML = `<span class="item-text" onclick="playLocalTrack(${index})">${track.name}</span><div style="color:#444; font-size:16px; cursor:pointer;" onclick="removeLocalTrack(${index})">×</div>`;
-            container.appendChild(div);
-        });
-    }
-
-    async function playLocalTrack(index) {
-        if(index < 0 || index >= localFiles.length) return;
-        setMediaMode('local');
-        currentLocalTrackIndex = index;
-        const track = localFiles[index];
-        const url = await getTrackUrl(index);
-        if (!url) return;
-        localAudioEl.src = url;
-        localAudioEl.play().catch(e => console.error("Playback error", e));
-        document.getElementById('mainLocalTrackTitle').innerText = track.name;
-        renderLocalPlaylist();
-    }
-
-    function toggleLocalPlay() {
-        if(localFiles.length === 0) return;
-        if(currentLocalTrackIndex === -1) { playLocalTrack(0); return; }
-        if(localAudioEl.paused) {
-            localAudioEl.play();
-        } else {
-            localAudioEl.pause();
-        }
-    }
-
-    function seekLocalAudio(val) {
-        if(!isNaN(localAudioEl.duration)) {
-            localAudioEl.currentTime = (val / 100) * localAudioEl.duration;
-        }
-    }
-
-    function formatTime(seconds) {
-        if(isNaN(seconds)) return "0:00";
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return m + ":" + (s < 10 ? "0" : "") + s;
-    }
-
-    function playPrevLocal() {
-        if(localFiles.length === 0) return;
-        if(localAudioEl.currentTime > 3) {
-            localAudioEl.currentTime = 0;
-            return;
-        }
-        let prevIndex = currentLocalTrackIndex - 1;
-        if(prevIndex < 0) prevIndex = localFiles.length - 1;
-        playLocalTrack(prevIndex);
+        document.getElementById('ytPlayerWrapper').style.opacity = '1';
+        document.getElementById('ytPlayerWrapper').style.pointerEvents = 'auto';
+        renderPlaylist();
     }
 
     const alarmOptions = document.getElementById('alarmOptions');
@@ -1748,7 +1376,6 @@
         document.getElementById('alarmVolSlider').value = config.alarmVol * 100;
         document.getElementById('alarmVolVal').innerText = Math.round(config.alarmVol * 100)+'%';
         document.getElementById('ytVolSlider').value = config.ytVol;
-        document.getElementById('localVolSlider').value = config.localVol;
         document.getElementById('currentAlarmName').innerText = config.alarmName;
         
         initAmbientPlayers();
@@ -1778,12 +1405,8 @@
 
         document.getElementById('alarmVolSlider').oninput = e => { config.alarmVol = e.target.value / 100; document.getElementById('alarmVolVal').innerText = Math.round(config.alarmVol * 100) + '%'; saveToStorage(); };
         document.getElementById('ytVolSlider').oninput = e => { config.ytVol = e.target.value; if(player && typeof player.setVolume === 'function') player.setVolume(Number(e.target.value)); saveToStorage(); };
-        document.getElementById('localVolSlider').oninput = e => { config.localVol = e.target.value; localAudioEl.volume = e.target.value / 100; saveToStorage(); };
-        
         setMediaMode(config.mediaMode);
         setTimerMode(config.timerMode);
-        
-        renderLocalPlaylist();
         updateNewTodoColorBtn();
     }
     
@@ -2092,7 +1715,7 @@
                 setTimerMode('stopwatch');
                 break;
             case 'm': case 'M':
-                setMediaMode(config.mediaMode === 'yt' ? 'local' : 'yt');
+                // ローカル再生機能削除済み
                 break;
             case 'ArrowUp':
                 if (config.timerMode === 'normal') { e.preventDefault(); adjustNormalTime(1); }
@@ -2109,7 +1732,6 @@
     // Init
     const note = document.getElementById('noteArea'); note.value = localStorage.getItem('roku_note') || ''; note.oninput = () => localStorage.setItem('roku_note', note.value);
     renderTodos();
-    openDB().then(() => loadTracksFromDB());
     initTheme();
     initUI();
 
