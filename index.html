@@ -48,7 +48,7 @@
         [data-theme^="light"] .ambient-item { background: var(--bg); border-color: var(--border); }
         [data-theme^="light"] .media-tabs { background: var(--bg); }
         [data-theme^="light"] .media-tab.active { background: var(--panel); }
-        [data-theme^="light"] .config-panel { background: var(--panel); }
+        [data-theme^="light"] .settings-popup { background: var(--panel); }
         [data-theme^="light"] details { background: var(--bg); }
         [data-theme^="light"] .sound-opt { color: var(--text-dim); }
         [data-theme^="light"] .calc-display { background: var(--bg); border-color: var(--border); }
@@ -251,31 +251,7 @@
         }
         .search-settings-open-btn:hover { color: var(--text-main); border-color: var(--text-dim); }
 
-        /* ── Search Settings Slide Panel (タイマー設定と同じ右スライド式) ── */
-        .search-config-panel {
-            position: fixed;
-            top: 0; right: 0;
-            width: 300px; height: 100vh;
-            background: var(--panel);
-            border-left: 1px solid var(--border);
-            border-radius: 32px 0 0 32px;
-            overflow-y: auto; scrollbar-width: thin; scrollbar-color: transparent transparent;
-            padding: 24px 22px;
-            box-sizing: border-box;
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 210;
-            box-shadow: -8px 0 40px rgba(0,0,0,0.6);
-        }
-        .search-config-panel:hover { scrollbar-color: #333 transparent; }
-        .search-config-panel::-webkit-scrollbar { width: 4px; }
-        .search-config-panel::-webkit-scrollbar-track { background: transparent; }
-        .search-config-panel::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
-        .search-config-panel:hover::-webkit-scrollbar-thumb { background: #333; }
-        .search-config-panel.open { transform: translateX(0); }
-        .search-config-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 209; display: none; }
-        .search-config-overlay.open { display: block; }
-        [data-theme^="light"] .search-config-panel { background: var(--panel); }
+        /* search-config-panel は統一ポップアップに移行済み */
         .search-site-item {
             display: flex;
             align-items: center;
@@ -420,29 +396,44 @@
         .btn-icon:disabled { opacity: 0.2; cursor: not-allowed; }
         .btn-icon:hover { background: #222; }
         .btn-icon.main:hover { background: #eee; }
-        .config-panel {
-            position: fixed;
-            top: 0; right: 0;
-            width: 300px; height: 100vh;
-            background: var(--panel);
-            border-left: 1px solid var(--border);
-            border-radius: 32px 0 0 32px;
-            overflow-y: auto; scrollbar-width: thin; scrollbar-color: transparent transparent;
-            padding: 24px 22px;
-            box-sizing: border-box;
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* ── 統一ポップアップ設定パネル ── */
+        .settings-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75);
             z-index: 200;
-            box-shadow: -8px 0 40px rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        .config-panel:hover { scrollbar-color: #333 transparent; }
-        .config-panel::-webkit-scrollbar { width: 4px; }
-        .config-panel::-webkit-scrollbar-track { background: transparent; }
-        .config-panel::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
-        .config-panel:hover::-webkit-scrollbar-thumb { background: #333; }
-        .config-panel.open { transform: translateX(0); }
-        .config-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 199; display: none; }
-        .config-overlay.open { display: block; }
+        .settings-overlay.open { display: flex; }
+        .settings-popup {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 24px 24px 28px;
+            width: 100%;
+            max-width: 340px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.95);
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+        }
+        .settings-popup:hover { scrollbar-color: #333 transparent; }
+        .settings-popup::-webkit-scrollbar { width: 4px; }
+        .settings-popup::-webkit-scrollbar-track { background: transparent; }
+        .settings-popup::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+        .settings-popup:hover::-webkit-scrollbar-thumb { background: #333; }
+        .settings-popup-title {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 18px;
+        }
+        .settings-popup-title .label { margin: 0; font-size: 13px; }
+        [data-theme^="light"] .settings-popup { background: var(--panel); }
+        .config-panel { display: none !important; }
+        .config-overlay { display: none !important; }
         .notes-panel.collapsed { flex: 0 0 44px !important; }
         .todo-panel.collapsed  { flex: 0 0 44px !important; }
         .notes-panel.collapsed textarea { display: none; }
@@ -661,35 +652,7 @@
                 <button class="btn-icon" id="lapBtn" onclick="recordLap()" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg></button>
             </div>
             
-            <div class="config-panel" id="configPanel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <span class="label" style="margin:0; font-size:14px;">Settings</span>
-                    <button class="btn-icon" style="padding:4px; border:none; border-radius:8px;" onclick="toggleSettings()"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
-                </div>
-                <div class="mode-toggle-wrap">
-                    <span class="mode-toggle-label">🌓 Mode</span>
-                    <button class="mode-toggle-btn" id="modeLightBtn" onclick="setLightMode()">☀ Light</button>
-                    <button class="mode-toggle-btn" id="modeDarkBtn"  onclick="setDarkMode()">🌙 Dark</button>
-                </div>
-                <div class="setting-item compact">
-                    <div style="margin-bottom:8px;"><span class="setting-label-text">🎨 Theme Color</span></div>
-                    <div class="theme-picker" id="themePicker">
-                        <div class="theme-dot active" data-theme="dark"   style="background:#fff;"    title="Default" onclick="applyColor('dark')"></div>
-                        <div class="theme-dot"        data-theme="slate"  style="background:#58a6ff;" title="Slate"   onclick="applyColor('slate')"></div>
-                        <div class="theme-dot"        data-theme="forest" style="background:#56c172;" title="Forest"  onclick="applyColor('forest')"></div>
-                        <div class="theme-dot"        data-theme="dusk"   style="background:#c084fc;" title="Dusk"    onclick="applyColor('dusk')"></div>
-                        <div class="theme-dot"        data-theme="amber"  style="background:#fbbf24;" title="Amber"   onclick="applyColor('amber')"></div>
-                        <div class="theme-dot"        data-theme="rose"   style="background:#fb7185;" title="Rose"    onclick="applyColor('rose')"></div>
-                    </div>
-                </div>
-                <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🎯 Focus</span><span id="fVal" class="setting-value-text pixel-font">25M</span></div><input type="range" id="fSlider" min="1" max="60" value="25"></div>
-                <div class="setting-item"><div class="setting-header"><span class="setting-label-text">☕ Break</span><span id="bVal" class="setting-value-text pixel-font">5M</span></div><input type="range" id="bSlider" min="1" max="30" value="5"></div>
-                <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🛌 Long Break</span><span id="lbVal" class="setting-value-text pixel-font">15M</span></div><input type="range" id="lbSlider" min="5" max="60" value="15"></div>
-                <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🔄 Sets</span><span id="sVal" class="setting-value-text pixel-font">4</span></div><input type="range" id="sSlider" min="1" max="10" value="4"></div>
-                <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🔊 Alarm Volume</span><span id="alarmVolVal" class="setting-value-text pixel-font">50%</span></div><input type="range" id="alarmVolSlider" min="0" max="100" value="50"></div>
-                <div class="setting-item"><span class="setting-label-text">🎵 Alarm Sound</span><details><summary id="currentAlarmName">Sound 01</summary><div id="alarmOptions"></div></details></div>
-            </div>
-        </div>
+        </div><!-- end timer-panel-wrap -->
         <div class="panel ambient-panel-wrap" style="padding: 10px 20px; flex: 1; display:flex; flex-direction:column; margin-top: 0;">
             <div class="ambient-panel scrollable" style="padding: 0; min-height:0;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
@@ -759,29 +722,89 @@
     </div>
 </div>
 
-<!-- 設定パネル背景オーバーレイ -->
-<div class="config-overlay" id="configOverlay" onclick="toggleSettings()"></div>
-
-<!-- 検索設定パネル背景オーバーレイ -->
-<div class="search-config-overlay" id="searchConfigOverlay" onclick="closeSearchSettings()"></div>
-<!-- ── Search Settings Slide Panel ── -->
-<div class="search-config-panel" id="searchConfigPanel">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <span class="label" style="margin:0; font-size:14px;">Search Engines</span>
-        <button class="btn-icon" style="padding:4px; border:none; border-radius:8px;" onclick="closeSearchSettings()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"></path></svg>
-        </button>
-    </div>
-    <div id="searchSiteList"></div>
-    <div class="search-add-form">
-        <div class="search-add-label">Add New Site</div>
-        <div class="search-add-inputs">
-            <input type="text" id="newSiteName" placeholder="Site name (e.g. Wikipedia)">
-            <input type="text" id="newSiteUrl" placeholder="URL with {q} (e.g. https://en.wikipedia.org/w/index.php?search={q})">
-            <input type="text" id="newSiteFavicon" placeholder="Favicon URL (optional)">
+<!-- ════ Timer Settings Popup ════ -->
+<div class="settings-overlay" id="timerSettingsOverlay" onclick="closeTimerSettings(event)">
+    <div class="settings-popup" onclick="event.stopPropagation()">
+        <div class="settings-popup-title">
+            <span class="label">Settings</span>
+            <button class="btn-icon" style="padding:4px; border:none; border-radius:8px; flex-shrink:0;" onclick="toggleSettings()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+            </button>
         </div>
-        <button class="search-add-btn" onclick="addSearchSite()">+ Add Site</button>
-        <div class="search-hint">※ {q} の部分が検索キーワードに置換されます<br>※ ファビコンURLは空欄でも自動取得します</div>
+
+        <!-- Mode -->
+        <div class="mode-toggle-wrap">
+            <span class="mode-toggle-label">🌓 Mode</span>
+            <button class="mode-toggle-btn" id="modeLightBtn" onclick="setLightMode()">☀ Light</button>
+            <button class="mode-toggle-btn" id="modeDarkBtn"  onclick="setDarkMode()">🌙 Dark</button>
+        </div>
+        <!-- Theme -->
+        <div class="setting-item compact">
+            <div style="margin-bottom:8px;"><span class="setting-label-text">🎨 Theme Color</span></div>
+            <div class="theme-picker" id="themePicker">
+                <div class="theme-dot active" data-theme="dark"   style="background:#fff;"    title="Default" onclick="applyColor('dark')"></div>
+                <div class="theme-dot"        data-theme="slate"  style="background:#58a6ff;" title="Slate"   onclick="applyColor('slate')"></div>
+                <div class="theme-dot"        data-theme="forest" style="background:#56c172;" title="Forest"  onclick="applyColor('forest')"></div>
+                <div class="theme-dot"        data-theme="dusk"   style="background:#c084fc;" title="Dusk"    onclick="applyColor('dusk')"></div>
+                <div class="theme-dot"        data-theme="amber"  style="background:#fbbf24;" title="Amber"   onclick="applyColor('amber')"></div>
+                <div class="theme-dot"        data-theme="rose"   style="background:#fb7185;" title="Rose"    onclick="applyColor('rose')"></div>
+            </div>
+        </div>
+
+        <!-- URL Sync -->
+        <div class="setting-item" style="margin-top:4px;">
+            <div style="margin-bottom:8px;">
+                <span class="setting-label-text">🔗 URL Sync</span>
+            </div>
+            <div style="display:flex; gap:6px; margin-bottom:6px;">
+                <button class="search-add-btn" style="margin:0; flex:1; font-size:10px; padding:7px 0;" onclick="generateSyncUrl()">📤 Generate URL</button>
+                <button class="search-add-btn" style="margin:0; flex:1; font-size:10px; padding:7px 0; background:#222; color:var(--text-main);" onclick="loadSyncUrl()">📥 Load URL</button>
+            </div>
+            <div id="syncUrlBox" style="display:none; margin-top:4px;">
+                <textarea id="syncUrlText" style="width:100%; height:56px; font-size:9px; background:#000; border:1px solid var(--border); border-radius:8px; color:var(--text-dim); padding:6px; box-sizing:border-box; resize:none; font-family:monospace;" readonly></textarea>
+                <button class="search-add-btn" style="margin-top:4px; font-size:10px; padding:6px 0;" onclick="copySyncUrl()">📋 Copy</button>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+                <input type="text" id="syncUrlInput" placeholder="Paste sync URL here..." style="flex:1; font-size:10px; height:28px;">
+            </div>
+            <div class="search-hint" style="margin-top:4px;">Notes・ToDoリスト・プレイリストをURLで共有・同期できます</div>
+        </div>
+
+        <!-- Timer -->
+        <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🎯 Focus</span><span id="fVal" class="setting-value-text pixel-font">25M</span></div><input type="range" id="fSlider" min="1" max="60" value="25"></div>
+        <div class="setting-item"><div class="setting-header"><span class="setting-label-text">☕ Break</span><span id="bVal" class="setting-value-text pixel-font">5M</span></div><input type="range" id="bSlider" min="1" max="30" value="5"></div>
+        <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🛌 Long Break</span><span id="lbVal" class="setting-value-text pixel-font">15M</span></div><input type="range" id="lbSlider" min="5" max="60" value="15"></div>
+        <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🔄 Sets</span><span id="sVal" class="setting-value-text pixel-font">4</span></div><input type="range" id="sSlider" min="1" max="10" value="4"></div>
+        <div class="setting-item"><div class="setting-header"><span class="setting-label-text">🔊 Alarm Volume</span><span id="alarmVolVal" class="setting-value-text pixel-font">50%</span></div><input type="range" id="alarmVolSlider" min="0" max="100" value="50"></div>
+        <div class="setting-item"><span class="setting-label-text">🎵 Alarm Sound</span><details><summary id="currentAlarmName">Sound 01</summary><div id="alarmOptions"></div></details></div>
+    </div>
+</div>
+
+<!-- ════ Search Settings Popup ════ -->
+<div class="settings-overlay" id="searchSettingsOverlay" onclick="closeSearchSettings(event)">
+    <div class="settings-popup" onclick="event.stopPropagation()">
+        <div class="settings-popup-title">
+            <span class="label">Search Engines</span>
+            <button class="btn-icon" style="padding:4px; border:none; border-radius:8px; flex-shrink:0;" onclick="closeSearchSettings()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div id="searchSiteList"></div>
+        <div class="search-add-form">
+            <div class="search-add-label">Add New Site</div>
+            <div class="search-add-inputs">
+                <input type="text" id="newSiteUrl" placeholder="URL with {q}  (e.g. https://example.com/search?q={q})" style="height:36px;">
+            </div>
+            <div id="sitePreview" style="display:none; margin-top:8px; padding:8px 12px; background:#111; border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; gap:10px;">
+                <div id="previewFavicon" class="search-site-favicon"></div>
+                <div class="search-site-info">
+                    <div id="previewName" class="search-site-name" style="font-size:12px;"></div>
+                    <div id="previewUrl" class="search-site-url" style="font-size:10px;"></div>
+                </div>
+            </div>
+            <button class="search-add-btn" onclick="addSearchSite()" style="margin-top:10px;">+ Add Site</button>
+            <div class="search-hint">※ {q} の部分が検索キーワードに置換されます<br>※ サイト名・ファビコンは自動取得します</div>
+        </div>
     </div>
 </div>
 
@@ -934,27 +957,27 @@
         window.open(searchUrl, '_blank');
     }
 
-    // Search Settings Slide Panel
+    // Search Settings Popup
     function openSearchSettings() {
         renderSearchSiteList();
-        document.getElementById('searchConfigPanel').classList.add('open');
-        document.getElementById('searchConfigOverlay').classList.add('open');
+        document.getElementById('searchSettingsOverlay').classList.add('open');
     }
-    function closeSearchSettings() {
-        document.getElementById('searchConfigPanel').classList.remove('open');
-        document.getElementById('searchConfigOverlay').classList.remove('open');
+    function closeSearchSettings(e) {
+        if (!e || e.target === document.getElementById('searchSettingsOverlay')) {
+            document.getElementById('searchSettingsOverlay').classList.remove('open');
+        }
     }
 
     function renderSearchSiteList() {
         const list = document.getElementById('searchSiteList');
         list.innerHTML = '';
-        searchSites.forEach((site, i) => {
+        searchSites.forEach((site) => {
             const faviconUrl = getFaviconUrl(site.url, site.favicon);
             const item = document.createElement('div');
             item.className = 'search-site-item';
             item.innerHTML = `
                 <div class="search-site-favicon">
-                    <img src="${faviconUrl}" alt="${site.name}" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\\'font-size:11px;color:#777;\\'>${site.name.substring(0,2).toUpperCase()}</span>'">
+                    <img src="${faviconUrl}" alt="${site.name}" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\\'font-size:10px;color:#777;\\'>${(site.name||'?').substring(0,2).toUpperCase()}</span>'">
                 </div>
                 <div class="search-site-info">
                     <div class="search-site-name">${site.name}</div>
@@ -975,26 +998,108 @@
         renderSearchSiteList();
     }
 
-    function addSearchSite() {
-        const name    = document.getElementById('newSiteName').value.trim();
-        const url     = document.getElementById('newSiteUrl').value.trim();
-        const favicon = document.getElementById('newSiteFavicon').value.trim();
-        if (!name || !url) { alert('サイト名とURLを入力してください'); return; }
-        if (!url.includes('{q}')) { alert('URLに {q} を含めてください（例: https://example.com/search?q={q}）'); return; }
-        const newSite = {
-            id: 'custom_' + Date.now(),
-            name: name,
-            url: url,
-            favicon: favicon
-        };
+    async function addSearchSite() {
+        const url = document.getElementById('newSiteUrl').value.trim();
+        if (!url) { alert('URLを入力してください'); return; }
+        if (!url.includes('{q}')) { alert('URLに {q} を含めてください\n例: https://example.com/search?q={q}'); return; }
+
+        // Auto-fetch site name & favicon via noembed or hostname extraction
+        let name = '';
+        let favicon = '';
+        try {
+            const baseUrl = url.replace('{q}', 'test');
+            const u = new URL(baseUrl);
+            const hostname = u.hostname.replace('www.', '');
+            name = hostname.split('.')[0].replace(/^./, c => c.toUpperCase());
+            favicon = `${u.protocol}//${u.hostname}/favicon.ico`;
+            // Try noembed for a better title
+            const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(u.origin)}`);
+            const data = await res.json();
+            if (data && data.provider_name) name = data.provider_name;
+        } catch(e) {}
+
+        const newSite = { id: 'custom_' + Date.now(), name: name || 'Site', url: url, favicon: favicon };
         searchSites.push(newSite);
         saveSearchSites();
-        document.getElementById('newSiteName').value = '';
         document.getElementById('newSiteUrl').value = '';
-        document.getElementById('newSiteFavicon').value = '';
         renderSearchEngines();
         renderSearchSiteList();
     }
+
+    // ── URL Sync ──
+    function buildSyncData() {
+        return {
+            v: 1,
+            note: localStorage.getItem('roku_note') || '',
+            todos: JSON.parse(localStorage.getItem('roku_todos') || '[]'),
+            playlist: JSON.parse(localStorage.getItem('roku_playlist') || '[]'),
+            theme_color: localStorage.getItem('roku_theme_color') || 'dark',
+            theme_light: localStorage.getItem('roku_theme_light') || '0',
+        };
+    }
+
+    function generateSyncUrl() {
+        const data = buildSyncData();
+        const json = JSON.stringify(data);
+        const b64 = btoa(unescape(encodeURIComponent(json)));
+        const url = location.href.split('?')[0] + '?sync=' + b64;
+        document.getElementById('syncUrlBox').style.display = 'block';
+        document.getElementById('syncUrlText').value = url;
+    }
+
+    function copySyncUrl() {
+        const text = document.getElementById('syncUrlText').value;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector('#syncUrlBox button');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy', 1500);
+        }).catch(() => {
+            document.getElementById('syncUrlText').select();
+            document.execCommand('copy');
+        });
+    }
+
+    function loadSyncUrl() {
+        const input = document.getElementById('syncUrlInput').value.trim();
+        if (!input) { alert('同期URLを貼り付けてください'); return; }
+        try {
+            const paramStr = input.includes('?sync=') ? input.split('?sync=')[1] : input;
+            const json = decodeURIComponent(escape(atob(paramStr)));
+            const data = JSON.parse(json);
+            if (data.v !== 1) throw new Error('Invalid version');
+            if (confirm('現在のデータを上書きして同期しますか？\n※メモ・ToDo・プレイリストが置き換えられます')) {
+                if (data.note !== undefined) localStorage.setItem('roku_note', data.note);
+                if (data.todos) localStorage.setItem('roku_todos', JSON.stringify(data.todos));
+                if (data.playlist) localStorage.setItem('roku_playlist', JSON.stringify(data.playlist));
+                if (data.theme_color) localStorage.setItem('roku_theme_color', data.theme_color);
+                if (data.theme_light) localStorage.setItem('roku_theme_light', data.theme_light);
+                alert('同期完了！ページをリロードします');
+                location.reload();
+            }
+        } catch(e) {
+            alert('URLの解析に失敗しました。正しい同期URLを貼り付けてください');
+        }
+    }
+
+    // Auto-load sync from URL on page load
+    (function() {
+        const params = new URLSearchParams(location.search);
+        const sync = params.get('sync');
+        if (sync) {
+            try {
+                const json = decodeURIComponent(escape(atob(sync)));
+                const data = JSON.parse(json);
+                if (data.v === 1) {
+                    if (data.note !== undefined) localStorage.setItem('roku_note', data.note);
+                    if (data.todos) localStorage.setItem('roku_todos', JSON.stringify(data.todos));
+                    if (data.playlist) localStorage.setItem('roku_playlist', JSON.stringify(data.playlist));
+                    if (data.theme_color) localStorage.setItem('roku_theme_color', data.theme_color);
+                    if (data.theme_light) localStorage.setItem('roku_theme_light', data.theme_light);
+                    history.replaceState({}, '', location.pathname);
+                }
+            } catch(e) {}
+        }
+    })();
 
     // ════════════════════════════════════════════════════════
     // ORIGINAL APP LOGIC (unchanged)
@@ -1519,11 +1624,14 @@
     }
     let settingsOpen = false;
     function toggleSettings() {
-        const panel = document.getElementById('configPanel');
-        const overlay = document.getElementById('configOverlay');
         settingsOpen = !settingsOpen;
-        panel.classList.toggle('open', settingsOpen);
-        overlay.classList.toggle('open', settingsOpen);
+        document.getElementById('timerSettingsOverlay').classList.toggle('open', settingsOpen);
+    }
+    function closeTimerSettings(e) {
+        if (!e || e.target === document.getElementById('timerSettingsOverlay')) {
+            settingsOpen = false;
+            document.getElementById('timerSettingsOverlay').classList.remove('open');
+        }
     }
     function togglePanelCollapse(targetId, otherId) {
         const target = document.getElementById(targetId);
