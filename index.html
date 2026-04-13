@@ -797,17 +797,10 @@
         <div class="search-add-form">
             <div class="search-add-label">Add New Site</div>
             <div class="search-add-inputs">
-                <input type="text" id="newSiteUrl" placeholder="URL with {q}  (e.g. https://example.com/search?q={q})" style="height:36px;">
-            </div>
-            <div id="sitePreview" style="display:none; margin-top:8px; padding:8px 12px; background:#111; border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; gap:10px;">
-                <div id="previewFavicon" class="search-site-favicon"></div>
-                <div class="search-site-info">
-                    <div id="previewName" class="search-site-name" style="font-size:12px;"></div>
-                    <div id="previewUrl" class="search-site-url" style="font-size:10px;"></div>
-                </div>
+                <input type="text" id="newSiteUrl" placeholder="サイトのURL (e.g. https://example.com)" style="height:36px;">
             </div>
             <button class="search-add-btn" onclick="addSearchSite()" style="margin-top:10px;">+ Add Site</button>
-            <div class="search-hint">※ {q} の部分が検索キーワードに置換されます<br>※ サイト名・ファビコンは自動取得します</div>
+            <div class="search-hint">※ サイトのURLを入力するだけで自動登録されます<br>※ サイト名・ファビコンは自動取得します</div>
         </div>
     </div>
 </div>
@@ -979,18 +972,75 @@
             const faviconUrl = getFaviconUrl(site.url, site.favicon);
             const item = document.createElement('div');
             item.className = 'search-site-item';
+            item.style.flexDirection = 'column';
+            item.style.alignItems = 'stretch';
+            item.style.gap = '0';
             item.innerHTML = `
-                <div class="search-site-favicon">
-                    <img src="${faviconUrl}" alt="${site.name}" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\\'font-size:10px;color:#777;\\'>${(site.name||'?').substring(0,2).toUpperCase()}</span>'">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="search-site-favicon">
+                        <img src="${faviconUrl}" alt="${site.name}" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\\'font-size:10px;color:#777;\\'>${(site.name||'?').substring(0,2).toUpperCase()}</span>'">
+                    </div>
+                    <div class="search-site-info" style="cursor:default;" title="ダブルクリックで編集">
+                        <div class="search-site-name" id="sname-${site.id}">${site.name}</div>
+                        <div class="search-site-url"  id="surl-${site.id}">${site.url}</div>
+                    </div>
+                    ${searchSites.length > 1 ? `<button class="search-site-del" onclick="removeSearchSite('${site.id}')" title="削除">✕</button>` : ''}
                 </div>
-                <div class="search-site-info">
-                    <div class="search-site-name">${site.name}</div>
-                    <div class="search-site-url">${site.url}</div>
+                <div id="sedit-${site.id}" style="display:none; margin-top:8px; display:none; flex-direction:column; gap:5px;">
+                    <input type="text" id="sedit-name-${site.id}" value="${site.name}" placeholder="Site name" style="height:28px; font-size:11px;">
+                    <input type="text" id="sedit-url-${site.id}"  value="${site.url}"  placeholder="Search URL" style="height:28px; font-size:11px;">
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="saveSearchSiteEdit('${site.id}')" style="flex:1; height:28px; background:var(--accent); color:var(--bg); border:none; border-radius:7px; font-size:10px; font-family:'Share Tech Mono',monospace; font-weight:bold; cursor:pointer;">✓ Save</button>
+                        <button onclick="cancelSearchSiteEdit('${site.id}')" style="flex:1; height:28px; background:#333; color:var(--text-main); border:1px solid #555; border-radius:7px; font-size:10px; font-family:'Share Tech Mono',monospace; font-weight:bold; cursor:pointer;">✕ Cancel</button>
+                    </div>
                 </div>
-                ${searchSites.length > 1 ? `<button class="search-site-del" onclick="removeSearchSite('${site.id}')" title="削除">✕</button>` : ''}
             `;
+            // ダブルクリックで編集モード
+            item.querySelector('.search-site-info').addEventListener('dblclick', () => {
+                openSearchSiteEdit(site.id);
+            });
             list.appendChild(item);
         });
+    }
+
+    function openSearchSiteEdit(id) {
+        const editBox = document.getElementById('sedit-' + id);
+        if (!editBox) return;
+        editBox.style.display = 'flex';
+        document.getElementById('sedit-name-' + id).focus();
+    }
+
+    function cancelSearchSiteEdit(id) {
+        const editBox = document.getElementById('sedit-' + id);
+        if (editBox) editBox.style.display = 'none';
+    }
+
+    function saveSearchSiteEdit(id) {
+        const nameEl = document.getElementById('sedit-name-' + id);
+        const urlEl  = document.getElementById('sedit-url-'  + id);
+        if (!nameEl || !urlEl) return;
+        const site = searchSites.find(s => s.id === id);
+        if (!site) return;
+        const newName = nameEl.value.trim() || site.name;
+        let newUrl = urlEl.value.trim() || site.url;
+        // {q} がなければ自動付加
+        if (!newUrl.includes('{q}')) {
+            try {
+                const u = new URL(newUrl);
+                const knownParams = ['q','query','search','keyword','k','text','p','wd','w'];
+                let detected = false;
+                for (const p of knownParams) {
+                    if (u.searchParams.has(p)) { u.searchParams.set(p, '{q}'); newUrl = u.toString(); detected = true; break; }
+                }
+                if (!detected) newUrl = newUrl.split('?')[0] + '?q={q}';
+            } catch(e) { newUrl += '?q={q}'; }
+        }
+        site.name    = newName;
+        site.url     = newUrl;
+        site.favicon = getFaviconUrl(newUrl, '');
+        saveSearchSites();
+        renderSearchEngines();
+        renderSearchSiteList();
     }
 
     function removeSearchSite(id) {
@@ -1003,26 +1053,52 @@
     }
 
     async function addSearchSite() {
-        const url = document.getElementById('newSiteUrl').value.trim();
-        if (!url) { alert('URLを入力してください'); return; }
-        if (!url.includes('{q}')) { alert('URLに {q} を含めてください\n例: https://example.com/search?q={q}'); return; }
+        let raw = document.getElementById('newSiteUrl').value.trim();
+        if (!raw) { alert('URLを入力してください'); return; }
 
-        // Auto-fetch site name & favicon via noembed or hostname extraction
+        // http(s)がなければ補完
+        if (!/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
+
+        let searchUrl = raw;
+
+        // すでに {q} が含まれていればそのまま使う
+        if (!searchUrl.includes('{q}')) {
+            // 既知の検索パラメータを自動検出して置換
+            const knownParams = ['q', 'query', 'search', 'keyword', 'k', 'text', 'p', 'wd', 'w'];
+            let detected = false;
+            try {
+                const u = new URL(searchUrl);
+                for (const p of knownParams) {
+                    if (u.searchParams.has(p)) {
+                        u.searchParams.set(p, '{q}');
+                        searchUrl = u.toString();
+                        detected = true;
+                        break;
+                    }
+                }
+                if (!detected) {
+                    // パラメータが無ければ ?q={q} を末尾に追加
+                    searchUrl = searchUrl.split('?')[0] + '?q={q}';
+                }
+            } catch(e) {
+                searchUrl = raw + '?q={q}';
+            }
+        }
+
+        // サイト名・ファビコン自動取得
         let name = '';
         let favicon = '';
         try {
-            const baseUrl = url.replace('{q}', 'test');
-            const u = new URL(baseUrl);
+            const u = new URL(searchUrl.replace('{q}', 'test'));
             const hostname = u.hostname.replace('www.', '');
             name = hostname.split('.')[0].replace(/^./, c => c.toUpperCase());
             favicon = `${u.protocol}//${u.hostname}/favicon.ico`;
-            // Try noembed for a better title
             const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(u.origin)}`);
             const data = await res.json();
             if (data && data.provider_name) name = data.provider_name;
         } catch(e) {}
 
-        const newSite = { id: 'custom_' + Date.now(), name: name || 'Site', url: url, favicon: favicon };
+        const newSite = { id: 'custom_' + Date.now(), name: name || 'Site', url: searchUrl, favicon: favicon };
         searchSites.push(newSite);
         saveSearchSites();
         document.getElementById('newSiteUrl').value = '';
@@ -1030,7 +1106,17 @@
         renderSearchSiteList();
     }
 
-    // ── URL Sync ──
+    // ── URLセーフ Base64 ──
+    function b64Encode(str) {
+        return btoa(unescape(encodeURIComponent(str)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function b64Decode(str) {
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        return decodeURIComponent(escape(atob(str)));
+    }
+
     function buildSyncData() {
         return {
             v: 1,
@@ -1046,8 +1132,7 @@
 
     function generateSyncQR() {
         const data = buildSyncData();
-        const json = JSON.stringify(data);
-        const b64 = btoa(unescape(encodeURIComponent(json)));
+        const b64 = b64Encode(JSON.stringify(data));
         _syncUrl = location.href.split('?')[0] + '?sync=' + b64;
 
         const box = document.getElementById('syncQrBox');
@@ -1055,7 +1140,6 @@
         canvas.innerHTML = '';
         box.style.display = 'block';
 
-        // QRコード生成（qrcode.js）
         if (typeof QRCode !== 'undefined') {
             new QRCode(canvas, {
                 text: _syncUrl,
@@ -1066,8 +1150,7 @@
                 correctLevel: QRCode.CorrectLevel.M
             });
         } else {
-            // フォールバック: URLのみ表示
-            canvas.innerHTML = `<div style="font-size:9px; color:#333; word-break:break-all; max-width:180px; padding:4px;">${_syncUrl}</div>`;
+            canvas.innerHTML = `<div style="font-size:9px;color:#333;word-break:break-all;max-width:180px;padding:4px;">${_syncUrl}</div>`;
         }
     }
 
@@ -1091,41 +1174,42 @@
         const input = document.getElementById('syncUrlInput').value.trim();
         if (!input) { alert('同期URLを貼り付けてください'); return; }
         try {
-            const paramStr = input.includes('?sync=') ? input.split('?sync=')[1] : input;
-            const json = decodeURIComponent(escape(atob(paramStr)));
-            const data = JSON.parse(json);
+            const paramStr = input.includes('?sync=') ? input.split('?sync=')[1].split('&')[0] : input;
+            const data = JSON.parse(b64Decode(paramStr));
             if (data.v !== 1) throw new Error('Invalid version');
             if (confirm('現在のデータを上書きして同期しますか？\n※メモ・ToDo・プレイリストが置き換えられます')) {
-                if (data.note !== undefined) localStorage.setItem('roku_note', data.note);
-                if (data.todos) localStorage.setItem('roku_todos', JSON.stringify(data.todos));
-                if (data.playlist) localStorage.setItem('roku_playlist', JSON.stringify(data.playlist));
-                if (data.theme_color) localStorage.setItem('roku_theme_color', data.theme_color);
-                if (data.theme_light) localStorage.setItem('roku_theme_light', data.theme_light);
+                applySyncData(data);
                 alert('同期完了！ページをリロードします');
                 location.reload();
             }
         } catch(e) {
-            alert('URLの解析に失敗しました。正しい同期URLを貼り付けてください');
+            alert('URLの解析に失敗しました。正しい同期URLを貼り付けてください\n\n詳細: ' + e.message);
         }
     }
 
-    // Auto-load sync from URL on page load
+    function applySyncData(data) {
+        if (data.note     !== undefined) localStorage.setItem('roku_note',      data.note);
+        if (data.todos)                  localStorage.setItem('roku_todos',      JSON.stringify(data.todos));
+        if (data.playlist)               localStorage.setItem('roku_playlist',   JSON.stringify(data.playlist));
+        if (data.theme_color)            localStorage.setItem('roku_theme_color', data.theme_color);
+        if (data.theme_light)            localStorage.setItem('roku_theme_light', data.theme_light);
+    }
+
+    // Auto-load sync from URL on page load（スクリプト最初に実行）
     (function() {
         const params = new URLSearchParams(location.search);
         const sync = params.get('sync');
-        if (sync) {
-            try {
-                const json = decodeURIComponent(escape(atob(sync)));
-                const data = JSON.parse(json);
-                if (data.v === 1) {
-                    if (data.note !== undefined) localStorage.setItem('roku_note', data.note);
-                    if (data.todos) localStorage.setItem('roku_todos', JSON.stringify(data.todos));
-                    if (data.playlist) localStorage.setItem('roku_playlist', JSON.stringify(data.playlist));
-                    if (data.theme_color) localStorage.setItem('roku_theme_color', data.theme_color);
-                    if (data.theme_light) localStorage.setItem('roku_theme_light', data.theme_light);
-                    history.replaceState({}, '', location.pathname);
-                }
-            } catch(e) {}
+        if (!sync) return;
+        try {
+            const data = JSON.parse(b64Decode(sync));
+            if (data.v === 1) {
+                applySyncData(data);
+                // パラメータを消してからリロード → initUI が綺麗な状態で走る
+                history.replaceState({}, '', location.pathname);
+                location.reload();
+            }
+        } catch(e) {
+            console.warn('Sync URL parse error:', e);
         }
     })();
 
