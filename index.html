@@ -972,11 +972,15 @@
             const faviconUrl = getFaviconUrl(site.url, site.favicon);
             const item = document.createElement('div');
             item.className = 'search-site-item';
+            item.draggable = true;
+            item.dataset.id = site.id;
             item.style.flexDirection = 'column';
             item.style.alignItems = 'stretch';
             item.style.gap = '0';
+            item.style.cursor = 'grab';
             item.innerHTML = `
                 <div style="display:flex; align-items:center; gap:10px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2" width="12" height="12" style="flex-shrink:0; opacity:0.5;"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
                     <div class="search-site-favicon">
                         <img src="${faviconUrl}" alt="${site.name}" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\\'font-size:10px;color:#777;\\'>${(site.name||'?').substring(0,2).toUpperCase()}</span>'">
                     </div>
@@ -986,7 +990,7 @@
                     </div>
                     ${searchSites.length > 1 ? `<button class="search-site-del" onclick="removeSearchSite('${site.id}')" title="削除">✕</button>` : ''}
                 </div>
-                <div id="sedit-${site.id}" style="display:none; margin-top:8px; display:none; flex-direction:column; gap:5px;">
+                <div id="sedit-${site.id}" style="display:none; margin-top:8px; flex-direction:column; gap:5px;">
                     <input type="text" id="sedit-name-${site.id}" value="${site.name}" placeholder="Site name" style="height:28px; font-size:11px;">
                     <input type="text" id="sedit-url-${site.id}"  value="${site.url}"  placeholder="Search URL" style="height:28px; font-size:11px;">
                     <div style="display:flex; gap:6px;">
@@ -995,10 +999,33 @@
                     </div>
                 </div>
             `;
-            // ダブルクリックで編集モード
-            item.querySelector('.search-site-info').addEventListener('dblclick', () => {
-                openSearchSiteEdit(site.id);
+
+            // ダブルクリックで編集
+            item.querySelector('.search-site-info').addEventListener('dblclick', () => openSearchSiteEdit(site.id));
+
+            // ドラッグ&ドロップ
+            item.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/search-id', site.id);
+                item.style.opacity = '0.4';
             });
+            item.addEventListener('dragend', () => { item.style.opacity = '1'; });
+            item.addEventListener('dragover', e => { e.preventDefault(); item.style.background = '#1e1e1e'; });
+            item.addEventListener('dragleave', () => { item.style.background = ''; });
+            item.addEventListener('drop', e => {
+                e.preventDefault();
+                item.style.background = '';
+                const fromId = e.dataTransfer.getData('text/search-id');
+                if (!fromId || fromId === site.id) return;
+                const fromIdx = searchSites.findIndex(s => s.id === fromId);
+                const toIdx   = searchSites.findIndex(s => s.id === site.id);
+                if (fromIdx < 0 || toIdx < 0) return;
+                const moved = searchSites.splice(fromIdx, 1)[0];
+                searchSites.splice(toIdx, 0, moved);
+                saveSearchSites();
+                renderSearchEngines();
+                renderSearchSiteList();
+            });
+
             list.appendChild(item);
         });
     }
