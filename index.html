@@ -668,17 +668,27 @@ let config = {
   alarmVol: savedConfig.alarmVol!==undefined?savedConfig.alarmVol:0.5,
   currentVid: savedConfig.currentVid||'jfKfPfyJRdk', ytVol: savedConfig.ytVol||50,
   timerMode: savedConfig.timerMode||'pomodoro', normalTimerInputVal: savedConfig.normalTimerInputVal||'10:00',
-  ambientList: savedConfig.ambientList||JSON.parse(JSON.stringify(DEFAULT_AMBIENT))
+  ambientList: savedConfig.ambientList||JSON.parse(JSON.stringify(DEFAULT_AMBIENT)),
+  ambientVer: savedConfig.ambientVer||null
 };
 
 function saveToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
 
 // アンビエントバージョン管理
+// roku_ambient_ver を独立キーではなく config 内で管理することで
+// ストレージパーティショニングによる誤リセットを防ぐ
 const AMB_VER = '6';
-if (localStorage.getItem('roku_ambient_ver') !== AMB_VER) {
+const _storedAmvVer = savedConfig.ambientVer || localStorage.getItem('roku_ambient_ver');
+if (_storedAmvVer !== AMB_VER) {
   config.ambientList = JSON.parse(JSON.stringify(DEFAULT_AMBIENT));
-  localStorage.setItem('roku_ambient_ver', AMB_VER);
-  saveToStorage();
+  config.ambientVer  = AMB_VER;
+  // ambientListとambientVerだけを既存保存データにマージして保存
+  const _merged = Object.assign({}, JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'), {
+    ambientList: config.ambientList,
+    ambientVer: AMB_VER
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(_merged));
+  localStorage.setItem('roku_ambient_ver', AMB_VER); // 後方互換で残す
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -844,6 +854,24 @@ let ytPlLoopMode = false;
 let ytPlShuffleMode = false;
 let ytPlCache = {}; // listId -> [{id,title}]
 
+// 既存データでタイトルが'Playlist'のままになっているPLエントリを非同期で修復
+(async function repairPlaylistTitles(){
+  const stale = playlist.filter(v=>v.type==='playlist'&&(v.title==='Playlist'||!v.title));
+  if(!stale.length) return;
+  let changed=false;
+  for(const v of stale){
+    // fetchPlaylistTitle は addNewVideo の下で定義されるが、
+    // ここでは直接APIを呼ぶ（関数宣言はホイスティングされない為）
+    try{
+      const url=`https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${v.listId}&key=${YT_API_KEY}`;
+      const r=await fetch(url); const d=await r.json();
+      const title=d.items?.[0]?.snippet?.title;
+      if(title){ v.title=title; changed=true; }
+    }catch(e){}
+  }
+  if(changed){ savePlaylist(); renderPlaylist(); }
+})();
+
 let ytTag = document.createElement('script');
 ytTag.src = 'https://www.youtube.com/iframe_api';
 document.head.appendChild(ytTag);
@@ -979,6 +1007,15 @@ function playNextVideo(){
   playYouTube(videoEntries[nextIdx].id);
 }
 
+async function fetchPlaylistTitle(listId){
+  try{
+    const url=`https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${listId}&key=${YT_API_KEY}`;
+    const r=await fetch(url); const d=await r.json();
+    const title=d.items?.[0]?.snippet?.title;
+    return title||null;
+  }catch(e){ return null; }
+}
+
 async function addNewVideo(){
   const raw = document.getElementById('ytUrl').value.trim();
   if(!raw) return;
@@ -987,8 +1024,8 @@ async function addNewVideo(){
   if(lm){
     const listId=lm[1], entryId='pl_'+listId;
     if(playlist.find(v=>v.id===entryId)){ document.getElementById('ytUrl').value=''; return; }
-    let title='Playlist';
-    try{ const r=await fetch(`https://noembed.com/embed?url=https://www.youtube.com/playlist?list=${listId}`); const d=await r.json(); if(d.title)title=d.title; }catch(e){}
+    // YouTube Data API v3 でプレイリスト名を取得
+    const title = (await fetchPlaylistTitle(listId)) || 'Playlist';
     playlist.push({id:entryId,listId,title,type:'playlist'});
   } else if(vm){
     const vidId=vm[1];
