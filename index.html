@@ -345,7 +345,7 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
           <input type="text" id="ytUrl" placeholder="YouTube URL or playlist URL..." onkeydown="if(event.key==='Enter')addNewVideo()">
           <button class="add-mini-btn" onclick="addNewVideo()">+</button>
         </div>
-        <span class="label" style="flex-shrink:0;margin-top:8px;margin-bottom:4px;">Playlist</span>
+        <span class="label" id="videoListLabel" style="flex-shrink:0;margin-top:8px;margin-bottom:4px;">Playlist</span>
         <div class="video-list-container" id="videoList"></div>
       </div>
 
@@ -865,7 +865,20 @@ function onYouTubeIframeAPIReady(){
           const sel=playlist.find(v=>v.id===config.currentVid);
           if(sel&&ytPlCache[sel.listId]) renderPlItems(ytPlCache[sel.listId]);
         }
-        if(e.data === YT.PlayerState.ENDED) playNextVideo();
+        if(e.data === YT.PlayerState.ENDED){
+          const sel=playlist.find(v=>v.id===config.currentVid);
+          if(sel?.type==='playlist'){
+            // PLエントリ: YouTubeのplaylist内が全て終了した時だけここに来る
+            // Shuffle/Loop はYT側setLoop/setShuffleに委ねているが、
+            // 再生リスト終端でENDEDになる場合はLoopオンなら先頭から再生
+            if(ytPlLoopMode){
+              try{ player?.playVideoAt(0); }catch(err){}
+            }
+          } else {
+            // 通常動画: 次の動画へ自動再生
+            playNextVideo();
+          }
+        }
       }
     }
   });
@@ -873,6 +886,17 @@ function onYouTubeIframeAPIReady(){
 }
 
 function renderPlaylist(){
+  // ラベルを現在選択中の再生リスト名(またはデフォルト)で更新
+  const labelEl = document.getElementById('videoListLabel');
+  if(labelEl){
+    const activePl = playlist.find(v=>v.id===config.currentVid&&v.type==='playlist');
+    const anyActive = playlist.find(v=>v.id===config.currentVid);
+    if(activePl && activePl.title && activePl.title !== 'Playlist'){
+      labelEl.innerText = activePl.title;
+    } else if(!anyActive || (anyActive && anyActive.type==='video')){
+      labelEl.innerText = 'Playlist';
+    }
+  }
   const c = document.getElementById('videoList');
   c.innerHTML = '';
   playlist.forEach((vid, i) => {
@@ -909,6 +933,15 @@ function playYouTube(vidId){
     document.getElementById('ytViewB').style.display='none';
     document.getElementById('btnYtPl').classList.remove('active');
   }
+  // ラベルをPL名で更新
+  const labelEl = document.getElementById('videoListLabel');
+  if(labelEl){
+    if(isPl && entry.title && entry.title!=='Playlist'){
+      labelEl.innerText = entry.title;
+    } else if(!isPl){
+      labelEl.innerText = 'Playlist';
+    }
+  }
   if(player){
     try {
       if(isPl) player.loadPlaylist({ listType:'playlist', list:entry.listId });
@@ -921,10 +954,25 @@ function playYouTube(vidId){
 function playNextVideo(){
   if(!playlist.length) return;
   const sel = playlist.find(v=>v.id===config.currentVid);
-  if(sel?.type==='playlist') return; // PLは自動送り
-  const i = playlist.findIndex(v=>v.id===config.currentVid);
-  if(!ytPlLoopMode && i>=playlist.length-1) return;
-  playYouTube(playlist[(i+1)%playlist.length].id);
+
+  if(sel?.type==='playlist'){
+    // PLエントリ選択中: Shuffle/Loop はYouTube側に委ねつつ
+    // 再生リスト内シャッフル(独自)とLoopを処理
+    // ※YouTube IFrame APIのloadPlaylistはYT側で自動送りされるためここでは何もしない
+    return;
+  }
+
+  // 通常動画: playlist内を順番に再生、最後で停止
+  const videoEntries = playlist.filter(v=>v.type==='video'||!v.type);
+  if(!videoEntries.length) return;
+
+  const curIdx = videoEntries.findIndex(v=>v.id===config.currentVid);
+  const nextIdx = curIdx + 1;
+  if(nextIdx >= videoEntries.length){
+    // 最後まで再生 → 停止(何もしない)
+    return;
+  }
+  playYouTube(videoEntries[nextIdx].id);
 }
 
 async function addNewVideo(){
@@ -1031,8 +1079,6 @@ function ytPlShuffle(){
   document.getElementById('ytplShuffle').classList.toggle('active',ytPlShuffleMode);
   try{
     player?.setShuffle(ytPlShuffleMode);
-    // シャッフル切り替え時はキャッシュの順番とYouTube内部順が変わるため
-    // アクティブ表示だけ再描画（リスト順は元のまま保持し混乱を防ぐ）
     if(ytPlViewB){
       const sel=playlist.find(v=>v.id===config.currentVid);
       if(sel&&ytPlCache[sel.listId]) renderPlItems(ytPlCache[sel.listId]);
