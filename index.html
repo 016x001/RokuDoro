@@ -6,7 +6,8 @@
 <title>RokuDoro</title>
 <meta property="og:title" content="RokuDoro">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://rokudoro.netlify.app">
+<meta property="og:url" content="">
+<script>document.querySelector('meta[property="og:url"]').content=location.href.split('?')[0];</script>
 <link rel="icon" href="ファビコン_tip.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -635,31 +636,13 @@ const DEFAULT_AMBIENT = [
   {id:'cafe', name:'Cafe', type:'local',src:'Ambient/VSQSE_cafe_01.ogg',  vol:30,playing:false,icon:'<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>'}
 ];
 
-let savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-let config = {
-  focusM: savedConfig.focusM||25, breakM: savedConfig.breakM||5, longM: savedConfig.longM||15, maxSets: savedConfig.maxSets||4,
-  autoStart: savedConfig.autoStart||false, timeSync: savedConfig.timeSync||false,
-  alarmUrl: savedConfig.alarmUrl||systemSounds[0].url, alarmName: savedConfig.alarmName||systemSounds[0].name,
-  alarmVol: savedConfig.alarmVol!==undefined?savedConfig.alarmVol:0.5,
-  currentVid: savedConfig.currentVid||'jfKfPfyJRdk', ytVol: savedConfig.ytVol||50,
-  timerMode: savedConfig.timerMode||'pomodoro', normalTimerInputVal: savedConfig.normalTimerInputVal||'10:00',
-  ambientList: savedConfig.ambientList||JSON.parse(JSON.stringify(DEFAULT_AMBIENT))
-};
-
-// アンビエントバージョン管理
-const AMB_VER = '6';
-if (localStorage.getItem('roku_ambient_ver') !== AMB_VER) {
-  config.ambientList = JSON.parse(JSON.stringify(DEFAULT_AMBIENT));
-  localStorage.setItem('roku_ambient_ver', AMB_VER);
-}
-
-function saveToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
-
-// ════════════════════════════════════════════════════════════════
-// AUTO-LOAD SYNC FROM URL (最初に実行)
-// ════════════════════════════════════════════════════════════════
 function b64Enc(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function b64Dec(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; return decodeURIComponent(escape(atob(s))); }
+
+// ════════════════════════════════════════════════════════════════
+// AUTO-LOAD SYNC FROM URL (config読み込みより先に実行)
+// ════════════════════════════════════════════════════════════════
+// URL syncパラメータがあれば先にlocalStorageへ書き込む（リロード不要）
 (function(){
   const p = new URLSearchParams(location.search).get('sync');
   if(!p) return;
@@ -672,10 +655,31 @@ function b64Dec(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+
       if(d.theme_color) localStorage.setItem('roku_theme_color', d.theme_color);
       if(d.theme_light) localStorage.setItem('roku_theme_light', d.theme_light);
       history.replaceState({}, '', location.pathname);
-      location.reload();
+      // location.reload() は使わず、後続の初期化コードが新しい値を読む
     }
   } catch(e){}
 })();
+
+let savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+let config = {
+  focusM: savedConfig.focusM||25, breakM: savedConfig.breakM||5, longM: savedConfig.longM||15, maxSets: savedConfig.maxSets||4,
+  autoStart: savedConfig.autoStart||false, timeSync: savedConfig.timeSync||false,
+  alarmUrl: savedConfig.alarmUrl||systemSounds[0].url, alarmName: savedConfig.alarmName||systemSounds[0].name,
+  alarmVol: savedConfig.alarmVol!==undefined?savedConfig.alarmVol:0.5,
+  currentVid: savedConfig.currentVid||'jfKfPfyJRdk', ytVol: savedConfig.ytVol||50,
+  timerMode: savedConfig.timerMode||'pomodoro', normalTimerInputVal: savedConfig.normalTimerInputVal||'10:00',
+  ambientList: savedConfig.ambientList||JSON.parse(JSON.stringify(DEFAULT_AMBIENT))
+};
+
+function saveToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
+
+// アンビエントバージョン管理
+const AMB_VER = '6';
+if (localStorage.getItem('roku_ambient_ver') !== AMB_VER) {
+  config.ambientList = JSON.parse(JSON.stringify(DEFAULT_AMBIENT));
+  localStorage.setItem('roku_ambient_ver', AMB_VER);
+  saveToStorage();
+}
 
 // ════════════════════════════════════════════════════════════════
 // CLOCK
@@ -1494,7 +1498,15 @@ function loadSyncUrl(){
       if(d.playlist)localStorage.setItem('roku_playlist',JSON.stringify(d.playlist));
       if(d.theme_color)localStorage.setItem('roku_theme_color',d.theme_color);
       if(d.theme_light)localStorage.setItem('roku_theme_light',d.theme_light);
-      alert('同期完了！ページをリロードします'); location.reload();
+      // リロードせずその場で反映
+      const note=document.getElementById('noteArea');
+      if(note) note.value=d.note||'';
+      todos=JSON.parse(localStorage.getItem('roku_todos')||'[]'); renderTodos();
+      playlist=JSON.parse(localStorage.getItem('roku_playlist')||'[]').map(v=>({...v,type:v.type||(v.listId?'playlist':'video')}));
+      savePlaylist(); renderPlaylist();
+      initTheme();
+      document.getElementById('syncUrlInput').value='';
+      alert('同期完了！');
     }
   } catch(e){ alert('URLの解析に失敗しました。\n詳細: '+e.message); }
 }
