@@ -677,7 +677,7 @@ function b64Dec(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+
   } catch(e){}
 })();
 
-let savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+let savedConfig = JSON.parse(LS.get(STORAGE_KEY) || 'null') || {};
 let config = {
   focusM: savedConfig.focusM||25, breakM: savedConfig.breakM||5, longM: savedConfig.longM||15, maxSets: savedConfig.maxSets||4,
   autoStart: savedConfig.autoStart||false, timeSync: savedConfig.timeSync||false,
@@ -700,13 +700,20 @@ if (_storedAmvVer !== AMB_VER) {
   config.ambientList = JSON.parse(JSON.stringify(DEFAULT_AMBIENT));
   config.ambientVer  = AMB_VER;
   // ambientListとambientVerだけを既存保存データにマージして保存
-  const _merged = Object.assign({}, JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'), {
+  const _merged = Object.assign({}, JSON.parse(LS.get(STORAGE_KEY) || '{}'), {
     ambientList: config.ambientList,
     ambientVer: AMB_VER
   });
   LS.set(STORAGE_KEY, JSON.stringify(_merged));
   LS.set('roku_ambient_ver', AMB_VER); // 後方互換で残す
 }
+
+// ════════════════════════════════════════════════════════════════
+// TIMER (変数宣言はCLOCKより前に置く — updateClock内でstateを参照するため)
+// ════════════════════════════════════════════════════════════════
+let player, timerId=null, state='focus', currentSet=1;
+let timeLeft=config.focusM*60, stopwatchTime=0, stopwatchLaps=[];
+let timerStartAt=null, timerStartLeft=0;
 
 // ════════════════════════════════════════════════════════════════
 // CLOCK
@@ -718,13 +725,6 @@ function updateClock(){
   if(config.timeSync) syncToClock();
 }
 setInterval(updateClock,1000); updateClock();
-
-// ════════════════════════════════════════════════════════════════
-// TIMER
-// ════════════════════════════════════════════════════════════════
-let player, timerId=null, state='focus', currentSet=1;
-let timeLeft=config.focusM*60, stopwatchTime=0, stopwatchLaps=[];
-let timerStartAt=null, timerStartLeft=0;
 const alarmAudio=document.getElementById('alarmAudio');
 alarmAudio.src=config.alarmUrl; alarmAudio.volume=config.alarmVol; alarmAudio.load();
 function playAlarm(){ alarmAudio.volume=config.alarmVol; alarmAudio.currentTime=0; alarmAudio.play(); }
