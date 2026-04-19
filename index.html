@@ -636,11 +636,28 @@ const DEFAULT_AMBIENT = [
   {id:'cafe', name:'Cafe', type:'local',src:'Ambient/VSQSE_cafe_01.ogg',  vol:30,playing:false,icon:'<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>'}
 ];
 
+// ════════════════════════════════════════════════════════════════
+// SAFE STORAGE HELPERS
+// localStorage が使えない環境(ITP/プライベートブラウズ等)でも
+// エラーで落ちないようにtry-catchでラップ
+// ════════════════════════════════════════════════════════════════
+const LS = {
+  get(key, fallback = null) {
+    try { const v = localStorage.getItem(key); return v !== null ? v : fallback; }
+    catch(e) { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch(e) { console.warn('localStorage.setItem failed:', key, e); return false; }
+  },
+  remove(key) {
+    try { localStorage.removeItem(key); return true; }
+    catch(e) { return false; }
+  }
+};
+
 function b64Enc(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 function b64Dec(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; return decodeURIComponent(escape(atob(s))); }
-
-// ════════════════════════════════════════════════════════════════
-// AUTO-LOAD SYNC FROM URL (config読み込みより先に実行)
 // ════════════════════════════════════════════════════════════════
 // URL syncパラメータがあれば先にlocalStorageへ書き込む（リロード不要）
 (function(){
@@ -649,11 +666,11 @@ function b64Dec(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+
   try {
     const d = JSON.parse(b64Dec(p));
     if(d.v===1){
-      if(d.note!==undefined) localStorage.setItem('roku_note', d.note);
-      if(d.todos)    localStorage.setItem('roku_todos',    JSON.stringify(d.todos));
-      if(d.playlist) localStorage.setItem('roku_playlist', JSON.stringify(d.playlist));
-      if(d.theme_color) localStorage.setItem('roku_theme_color', d.theme_color);
-      if(d.theme_light) localStorage.setItem('roku_theme_light', d.theme_light);
+      if(d.note!==undefined) LS.set('roku_note', d.note);
+      if(d.todos)    LS.set('roku_todos',    JSON.stringify(d.todos));
+      if(d.playlist) LS.set('roku_playlist', JSON.stringify(d.playlist));
+      if(d.theme_color) LS.set('roku_theme_color', d.theme_color);
+      if(d.theme_light) LS.set('roku_theme_light', d.theme_light);
       history.replaceState({}, '', location.pathname);
       // location.reload() は使わず、後続の初期化コードが新しい値を読む
     }
@@ -672,13 +689,13 @@ let config = {
   ambientVer: savedConfig.ambientVer||null
 };
 
-function saveToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); }
+function saveToStorage(){ LS.set(STORAGE_KEY, JSON.stringify(config)); }
 
 // アンビエントバージョン管理
 // roku_ambient_ver を独立キーではなく config 内で管理することで
 // ストレージパーティショニングによる誤リセットを防ぐ
 const AMB_VER = '6';
-const _storedAmvVer = savedConfig.ambientVer || localStorage.getItem('roku_ambient_ver');
+const _storedAmvVer = savedConfig.ambientVer || LS.get('roku_ambient_ver');
 if (_storedAmvVer !== AMB_VER) {
   config.ambientList = JSON.parse(JSON.stringify(DEFAULT_AMBIENT));
   config.ambientVer  = AMB_VER;
@@ -687,8 +704,8 @@ if (_storedAmvVer !== AMB_VER) {
     ambientList: config.ambientList,
     ambientVer: AMB_VER
   });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(_merged));
-  localStorage.setItem('roku_ambient_ver', AMB_VER); // 後方互換で残す
+  LS.set(STORAGE_KEY, JSON.stringify(_merged));
+  LS.set('roku_ambient_ver', AMB_VER); // 後方互換で残す
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -844,7 +861,7 @@ function updateIcons(run){
 // ════════════════════════════════════════════════════════════════
 // playlist: 各エントリ { id, title, type:'video'|'playlist', listId? }
 let playlist = (() => {
-  const raw = JSON.parse(localStorage.getItem('roku_playlist') || 'null');
+  const raw = JSON.parse(LS.get('roku_playlist') || 'null');
   if (!raw || !raw.length) return [{ id:'jfKfPfyJRdk', title:'lofi hip hop radio 📚 relax/study', type:'video' }];
   return raw.map(v => ({ ...v, type: v.type || (v.listId ? 'playlist' : 'video') }));
 })();
@@ -951,7 +968,7 @@ function renderPlaylist(){
   updateYtPlBtn();
 }
 
-function savePlaylist(){ localStorage.setItem('roku_playlist', JSON.stringify(playlist)); }
+function savePlaylist(){ LS.set('roku_playlist', JSON.stringify(playlist)); }
 
 function playYouTube(vidId){
   config.currentVid = vidId;
@@ -1254,9 +1271,9 @@ const DEFAULT_SEARCH = [
   {id:'google-img',  name:'Google Images',url:'https://www.google.com/search?tbm=isch&q={q}',  favicon:'https://www.google.com/favicon.ico'},
   {id:'pinterest',   name:'Pinterest',    url:'https://www.pinterest.com/search/pins/?q={q}',  favicon:'https://www.pinterest.com/favicon.ico'}
 ];
-let searchSites   = JSON.parse(localStorage.getItem('roku_search_sites') || 'null') || JSON.parse(JSON.stringify(DEFAULT_SEARCH));
-let activeSearchId = localStorage.getItem('roku_search_active') || searchSites[0]?.id || '';
-function saveSites(){ localStorage.setItem('roku_search_sites',JSON.stringify(searchSites)); localStorage.setItem('roku_search_active',activeSearchId); }
+let searchSites   = JSON.parse(LS.get('roku_search_sites') || 'null') || JSON.parse(JSON.stringify(DEFAULT_SEARCH));
+let activeSearchId = LS.get('roku_search_active') || searchSites[0]?.id || '';
+function saveSites(){ LS.set('roku_search_sites',JSON.stringify(searchSites)); LS.set('roku_search_active',activeSearchId); }
 function getFavicon(url,custom){ if(custom&&custom.trim())return custom.trim(); try{ const u=new URL(url); return `${u.protocol}//${u.hostname}/favicon.ico`; }catch(e){return '';} }
 function renderEngines(){
   const row=document.getElementById('searchEnginesRow');
@@ -1366,7 +1383,7 @@ function _applyTheme(){
   const root=document.documentElement;
   const nm=isLightMode?(currentColorKey==='dark'?'light':`light-${currentColorKey}`):(currentColorKey==='dark'?null:currentColorKey);
   if(nm) root.setAttribute('data-theme',nm); else root.removeAttribute('data-theme');
-  localStorage.setItem('roku_theme_color',currentColorKey); localStorage.setItem('roku_theme_light',isLightMode?'1':'0');
+  LS.set('roku_theme_color',currentColorKey); LS.set('roku_theme_light',isLightMode?'1':'0');
   document.querySelectorAll('.theme-dot').forEach(d=>d.classList.toggle('active',d.dataset.theme===currentColorKey));
   const lb=document.getElementById('modeLightBtn'), db=document.getElementById('modeDarkBtn');
   if(lb&&db){
@@ -1374,7 +1391,7 @@ function _applyTheme(){
     db.style.background=!isLightMode?'var(--accent)':''; db.style.color=!isLightMode?'#fff':'var(--text-dim)';
   }
 }
-function initTheme(){ currentColorKey=localStorage.getItem('roku_theme_color')||'dark'; isLightMode=localStorage.getItem('roku_theme_light')==='1'; _applyTheme(); }
+function initTheme(){ currentColorKey=LS.get('roku_theme_color')||'dark'; isLightMode=LS.get('roku_theme_light')==='1'; _applyTheme(); }
 
 // ════════════════════════════════════════════════════════════════
 // FLOAT WINDOWS
@@ -1432,7 +1449,7 @@ function calMove(d){ calM+=d; if(calM>11){calM=0;calY++;} if(calM<0){calM=11;cal
 // TODO
 // ════════════════════════════════════════════════════════════════
 const PROJECT_COLORS=['#ffffff','#FF4C86','#4C9FFF','#FFC64A'];
-let selColor=0, todos=JSON.parse(localStorage.getItem('roku_todos')||'[]');
+let selColor=0, todos=JSON.parse(LS.get('roku_todos')||'[]');
 function updateColorBtn(){ document.getElementById('newTodoColor').style.background=PROJECT_COLORS[selColor]; }
 function cycleNewTodoColor(){ selColor=(selColor+1)%PROJECT_COLORS.length; updateColorBtn(); }
 function renderTodos(){
@@ -1451,7 +1468,7 @@ function renderTodos(){
     d.addEventListener('drop',e=>{e.preventDefault();const f=parseInt(e.dataTransfer.getData('ti'));if(f!==i){todos.splice(i,0,todos.splice(f,1)[0]);renderTodos();}});
     list.appendChild(d);
   });
-  localStorage.setItem('roku_todos',JSON.stringify(todos));
+  LS.set('roku_todos',JSON.stringify(todos));
 }
 function editTodo(i){ const s=document.getElementById('tt-'+i); s.contentEditable='true'; s.focus(); const r=document.createRange(),sel=window.getSelection(); r.selectNodeContents(s); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); }
 function saveTodoEdit(i){ const s=document.getElementById('tt-'+i); s.contentEditable='false'; todos[i].text=s.innerText.trim()||'New Task'; renderTodos(); }
@@ -1511,7 +1528,7 @@ function adjustNormalTime(m){
 // URL SYNC
 // ════════════════════════════════════════════════════════════════
 let _syncUrl='';
-function buildSyncData(){ return { v:1, note:localStorage.getItem('roku_note')||'', todos:JSON.parse(localStorage.getItem('roku_todos')||'[]'), playlist:JSON.parse(localStorage.getItem('roku_playlist')||'[]'), theme_color:localStorage.getItem('roku_theme_color')||'dark', theme_light:localStorage.getItem('roku_theme_light')||'0' }; }
+function buildSyncData(){ return { v:1, note:LS.get('roku_note')||'', todos:JSON.parse(LS.get('roku_todos')||'[]'), playlist:JSON.parse(LS.get('roku_playlist')||'[]'), theme_color:LS.get('roku_theme_color')||'dark', theme_light:LS.get('roku_theme_light')||'0' }; }
 function generateSyncQR(){
   const data=buildSyncData();
   _syncUrl=location.href.split('?')[0]+'?sync='+b64Enc(JSON.stringify(data));
@@ -1530,16 +1547,16 @@ function loadSyncUrl(){
     const ps=inp.includes('?sync=')?inp.split('?sync=')[1].split('&')[0]:inp;
     const d=JSON.parse(b64Dec(ps)); if(d.v!==1)throw new Error('Invalid version');
     if(confirm('現在のデータを上書きして同期しますか？\n※メモ・ToDo・プレイリストが置き換えられます')){
-      if(d.note!==undefined)localStorage.setItem('roku_note',d.note);
-      if(d.todos)localStorage.setItem('roku_todos',JSON.stringify(d.todos));
-      if(d.playlist)localStorage.setItem('roku_playlist',JSON.stringify(d.playlist));
-      if(d.theme_color)localStorage.setItem('roku_theme_color',d.theme_color);
-      if(d.theme_light)localStorage.setItem('roku_theme_light',d.theme_light);
+      if(d.note!==undefined)LS.set('roku_note',d.note);
+      if(d.todos)LS.set('roku_todos',JSON.stringify(d.todos));
+      if(d.playlist)LS.set('roku_playlist',JSON.stringify(d.playlist));
+      if(d.theme_color)LS.set('roku_theme_color',d.theme_color);
+      if(d.theme_light)LS.set('roku_theme_light',d.theme_light);
       // リロードせずその場で反映
       const note=document.getElementById('noteArea');
       if(note) note.value=d.note||'';
-      todos=JSON.parse(localStorage.getItem('roku_todos')||'[]'); renderTodos();
-      playlist=JSON.parse(localStorage.getItem('roku_playlist')||'[]').map(v=>({...v,type:v.type||(v.listId?'playlist':'video')}));
+      todos=JSON.parse(LS.get('roku_todos')||'[]'); renderTodos();
+      playlist=JSON.parse(LS.get('roku_playlist')||'[]').map(v=>({...v,type:v.type||(v.listId?'playlist':'video')}));
       savePlaylist(); renderPlaylist();
       initTheme();
       document.getElementById('syncUrlInput').value='';
@@ -1604,8 +1621,8 @@ function initUI(){
 }
 
 const note=document.getElementById('noteArea');
-note.value=localStorage.getItem('roku_note')||'';
-note.oninput=()=>localStorage.setItem('roku_note',note.value);
+note.value=LS.get('roku_note')||'';
+note.oninput=()=>LS.set('roku_note',note.value);
 renderTodos();
 initTheme();
 initUI();
