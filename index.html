@@ -714,17 +714,6 @@ if (_storedAmvVer !== AMB_VER) {
 let player, timerId=null, state='focus', currentSet=1;
 let timeLeft=config.focusM*60, stopwatchTime=0, stopwatchLaps=[];
 let timerStartAt=null, timerStartLeft=0;
-
-// ════════════════════════════════════════════════════════════════
-// CLOCK
-// ════════════════════════════════════════════════════════════════
-function updateClock(){
-  const n=new Date(), days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  document.getElementById('clockDate').innerText=`${n.getFullYear()}.${String(n.getMonth()+1).padStart(2,'0')}.${String(n.getDate()).padStart(2,'0')} ${days[n.getDay()]}`;
-  document.getElementById('clockTime').innerText=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
-  if(config.timeSync) syncToClock();
-}
-setInterval(updateClock,1000); updateClock();
 const alarmAudio=document.getElementById('alarmAudio');
 alarmAudio.src=config.alarmUrl; alarmAudio.volume=config.alarmVol; alarmAudio.load();
 function playAlarm(){ alarmAudio.volume=config.alarmVol; alarmAudio.currentTime=0; alarmAudio.play(); }
@@ -739,6 +728,17 @@ function syncToClock(){
   currentSet=(Math.floor((n.getHours()*60+n.getMinutes())/30)%config.maxSets)+1;
   updDisp(); updateIcons(true);
 }
+
+// ════════════════════════════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════════════════════════════
+function updateClock(){
+  const n=new Date(), days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  document.getElementById('clockDate').innerText=`${n.getFullYear()}.${String(n.getMonth()+1).padStart(2,'0')}.${String(n.getDate()).padStart(2,'0')} ${days[n.getDay()]}`;
+  document.getElementById('clockTime').innerText=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+  if(config.timeSync) syncToClock();
+}
+setInterval(updateClock,1000); updateClock();
 function toggleTimer(){ if(config.timeSync&&config.timerMode==='pomodoro')return; timerId?pauseTimer():startTimer(); }
 function pauseTimer(){
   if(!timerId) return;
