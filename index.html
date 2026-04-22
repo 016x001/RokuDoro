@@ -536,10 +536,10 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
     <div class="search-add-form">
       <div class="search-add-label">Add New Site</div>
       <div class="search-add-inputs">
-        <input type="text" id="newSiteUrl" placeholder="サイトのURL (e.g. https://example.com)" style="height:36px;">
+        <input type="text" id="newSiteUrl" placeholder="https://example.com  または  https://example.com/search?q={q}" style="height:36px;">
       </div>
       <button class="search-add-btn" onclick="addSearchSite()" style="margin-top:10px;">+ Add Site</button>
-      <div class="search-hint">※ URLを入力するだけで自動登録・サイト名/ファビコン自動取得</div>
+      <div class="search-hint">※ URLをそのまま入力で自動登録 / <code style="font-size:10px;opacity:.7;">{q}</code> を含めると検索ワード位置を明示指定できます</div>
     </div>
   </div>
 </div>
@@ -1329,7 +1329,9 @@ function saveSiteEdit(id){
   const s=searchSites.find(x=>x.id===id); if(!s) return;
   const n=document.getElementById('en_'+id)?.value.trim()||s.name;
   let u=document.getElementById('eu_'+id)?.value.trim()||s.url;
-  if(!u.includes('{q}')){ try{ const uu=new URL(u); const kp=['q','query','search','keyword','k','text','p','wd','w']; let ok=false; for(const p of kp){ if(uu.searchParams.has(p)){ uu.searchParams.set(p,'{q}'); u=uu.toString(); ok=true; break; } } if(!ok)u=u.split('?')[0]+'?q={q}'; }catch(e){u+='?q={q}';} }
+  if(!u.includes('{q}')){
+    try{ const uu=new URL(u); const kp=['q','query','search','keyword','k','text','p','wd','w']; let ok=false; for(const p of kp){ if(uu.searchParams.has(p)){ uu.searchParams.set(p,'{q}'); u=uu.toString(); ok=true; break; } } if(!ok)u=u.split('?')[0]+'?q={q}'; }catch(e){u+='?q={q}';}
+  }
   s.name=n; s.url=u; s.favicon=getFavicon(u,'');
   saveSites(); renderEngines(); renderSearchSiteList();
 }
@@ -1342,14 +1344,21 @@ function removeSearchSite(id){
 async function addSearchSite(){
   let raw=document.getElementById('newSiteUrl').value.trim(); if(!raw) return;
   if(!/^https?:\/\//i.test(raw)) raw='https://'+raw;
+
   let su=raw;
-  if(!su.includes('{q}')){
+  if(su.includes('{q}')){
+    // ユーザーが {q} を明示指定 → そのまま使う
+  } else {
+    // 自動推定: よくある検索パラメータ名を探してそこに {q} を挿入
     try{
-      const u=new URL(su); const kp=['q','query','search','keyword','k','text','p','wd','w']; let ok=false;
+      const u=new URL(su);
+      const kp=['q','query','search','keyword','k','text','p','wd','w'];
+      let ok=false;
       for(const p of kp){ if(u.searchParams.has(p)){ u.searchParams.set(p,'{q}'); su=u.toString(); ok=true; break; } }
       if(!ok) su=su.split('?')[0]+'?q={q}';
     }catch(e){ su=raw+'?q={q}'; }
   }
+
   let name='', fav='';
   try{
     const u=new URL(su.replace('{q}','test'));
@@ -1388,7 +1397,9 @@ function _applyTheme(){
   const lb=document.getElementById('modeLightBtn'), db=document.getElementById('modeDarkBtn');
   if(lb&&db){
     lb.style.background=isLightMode?'var(--accent)':''; lb.style.color=isLightMode?'#fff':'var(--text-dim)';
-    db.style.background=!isLightMode?'var(--accent)':''; db.style.color=!isLightMode?'#fff':'var(--text-dim)';
+    // Dark+無彩色はaccentが#fff(白)になるため、ボタン背景が白の場合は文字を黒にする
+    const accentIsWhite = !isLightMode && currentColorKey==='dark';
+    db.style.background=!isLightMode?'var(--accent)':''; db.style.color=!isLightMode?(accentIsWhite?'#000':'#fff'):'var(--text-dim)';
   }
 }
 function initTheme(){ currentColorKey=LS.get('roku_theme_color')||'dark'; isLightMode=LS.get('roku_theme_light')==='1'; _applyTheme(); }
