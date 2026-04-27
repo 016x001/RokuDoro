@@ -441,7 +441,10 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
     <!-- 検索 -->
     <div class="search-panel" id="searchPanel">
       <div class="search-input-row">
-        <input type="text" class="search-input" id="searchInput" placeholder="Search..." onkeydown="if(event.key==='Enter')doSearch()">
+        <div style="position:relative;flex:1;min-width:0;display:flex;align-items:center;">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search..." onkeydown="if(event.key==='Enter')doSearch()" oninput="document.getElementById('searchClearBtn').style.display=this.value?'flex':'none'" style="width:100%;padding-right:28px;">
+          <button id="searchClearBtn" onclick="document.getElementById('searchInput').value='';this.style.display='none';document.getElementById('searchInput').focus();" style="display:none;position:absolute;right:6px;background:none;border:none;cursor:pointer;color:var(--text-dim);padding:0;width:18px;height:18px;align-items:center;justify-content:center;font-size:14px;line-height:1;opacity:.6;" title="クリア">✕</button>
+        </div>
         <button class="search-go-btn" onclick="doSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
       </div>
       <div class="search-engines-row" id="searchEnginesRow">
@@ -604,6 +607,8 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
     <div class="shortcut-row"><span class="shortcut-key">2</span><span class="shortcut-desc">TIMER モード</span></div>
     <div class="shortcut-row"><span class="shortcut-key">3</span><span class="shortcut-desc">STOPWATCH モード</span></div>
     <div class="shortcut-row"><span class="shortcut-key">↑ / ↓</span><span class="shortcut-desc">タイマー ±1分(TIMER モード)</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">/</span><span class="shortcut-desc">検索欄にフォーカス</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">Esc</span><span class="shortcut-desc">検索欄のフォーカスを解除</span></div>
     <div class="shortcut-row"><span class="shortcut-key">?</span><span class="shortcut-desc">このヘルプを閉じる</span></div>
   </div>
 </div>
@@ -1321,9 +1326,29 @@ function renderSearchSiteList(){
 }
 function editSiteInline(id,item){
   const s=searchSites.find(x=>x.id===id); if(!s) return;
-  const ed=document.createElement('div'); ed.style.cssText='margin-top:6px;display:flex;flex-direction:column;gap:4px;';
-  ed.innerHTML=`<input type="text" value="${s.name}" id="en_${id}" style="height:28px;font-size:11px;"><input type="text" value="${s.url}" id="eu_${id}" style="height:28px;font-size:11px;"><div style="display:flex;gap:5px;"><button onclick="saveSiteEdit('${id}')" style="flex:1;height:26px;background:var(--accent);color:var(--bg);border:none;border-radius:6px;font-size:10px;font-family:'Share Tech Mono',monospace;font-weight:bold;cursor:pointer;">✓</button><button onclick="renderSearchSiteList()" style="flex:1;height:26px;background:#333;color:var(--text-main);border:1px solid #555;border-radius:6px;font-size:10px;font-family:'Share Tech Mono',monospace;font-weight:bold;cursor:pointer;">✕</button></div>`;
+  // 編集中はアイテム全体のドラッグを無効化
+  item.draggable=false;
+
+  const ed=document.createElement('div');
+  ed.style.cssText='margin-top:6px;display:flex;flex-direction:column;gap:4px;';
+
+  const inpName=document.createElement('input'); inpName.type='text'; inpName.value=s.name; inpName.id='en_'+id; inpName.style.cssText='height:28px;font-size:11px;';
+  const inpUrl =document.createElement('input'); inpUrl.type='text';  inpUrl.value=s.url;  inpUrl.id='eu_'+id; inpUrl.style.cssText='height:28px;font-size:11px;';
+
+  // inputでドラッグ・mousedownがitemに伝わらないようにする
+  [inpName, inpUrl].forEach(inp=>{
+    inp.addEventListener('dragstart', e=>{ e.preventDefault(); e.stopPropagation(); });
+    inp.addEventListener('mousedown', e=>e.stopPropagation());
+  });
+
+  const btnRow=document.createElement('div'); btnRow.style.cssText='display:flex;gap:5px;';
+  const btnOk=document.createElement('button'); btnOk.textContent='✓'; btnOk.style.cssText='flex:1;height:26px;background:var(--accent);color:var(--bg);border:none;border-radius:6px;font-size:10px;font-family:\'Share Tech Mono\',monospace;font-weight:bold;cursor:pointer;'; btnOk.onclick=()=>saveSiteEdit(id);
+  const btnCx=document.createElement('button'); btnCx.textContent='✕'; btnCx.style.cssText='flex:1;height:26px;background:#333;color:var(--text-main);border:1px solid #555;border-radius:6px;font-size:10px;font-family:\'Share Tech Mono\',monospace;font-weight:bold;cursor:pointer;'; btnCx.onclick=()=>renderSearchSiteList();
+  btnRow.appendChild(btnOk); btnRow.appendChild(btnCx);
+
+  ed.appendChild(inpName); ed.appendChild(inpUrl); ed.appendChild(btnRow);
   item.appendChild(ed);
+  inpName.focus();
 }
 function saveSiteEdit(id){
   const s=searchSites.find(x=>x.id===id); if(!s) return;
@@ -1582,6 +1607,18 @@ function loadSyncUrl(){
 function closeShortcuts(e){ if(!e||e.target===document.getElementById('shortcutOverlay')) document.getElementById('shortcutOverlay').classList.remove('open'); }
 document.addEventListener('keydown',e=>{
   const tag=document.activeElement.tagName;
+  // / キー: 検索欄にフォーカス（入力中は除く）
+  if(e.key==='/' && tag!=='INPUT' && tag!=='TEXTAREA' && !document.activeElement.isContentEditable){
+    e.preventDefault();
+    const si=document.getElementById('searchInput');
+    si.focus(); si.select();
+    return;
+  }
+  // Escape: 検索欄のフォーカスを外す
+  if(e.key==='Escape' && document.activeElement===document.getElementById('searchInput')){
+    document.getElementById('searchInput').blur();
+    return;
+  }
   if(tag==='INPUT'||tag==='TEXTAREA'||document.activeElement.isContentEditable) return;
   switch(e.key){
     case ' ': e.preventDefault(); toggleTimer(); break;
