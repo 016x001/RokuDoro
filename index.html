@@ -719,6 +719,9 @@ if (_storedAmvVer !== AMB_VER) {
 let player, timerId=null, state='focus', currentSet=1;
 let timeLeft=config.focusM*60, stopwatchTime=0, stopwatchLaps=[];
 let timerStartAt=null, timerStartLeft=0;
+
+// Worker/setInterval 両対応の停止ヘルパー
+function stopTimerId(){ if(!timerId) return; if(timerId.postMessage) timerId.postMessage('stop'); else stopTimerId(); }
 const alarmAudio=document.getElementById('alarmAudio');
 alarmAudio.src=config.alarmUrl; alarmAudio.volume=config.alarmVol; alarmAudio.load();
 function playAlarm(){ alarmAudio.volume=config.alarmVol; alarmAudio.currentTime=0; alarmAudio.play(); }
@@ -744,6 +747,22 @@ function updateClock(){
   if(config.timeSync) syncToClock();
 }
 setInterval(updateClock,1000); updateClock();
+
+// ════════════════════════════════════════════════════════════════
+// VISIBILITY RESYNC
+// サイドバー/バックグラウンドタブからフォーカスが戻った際に
+// setIntervalの間引きによる表示ズレを即座に補正する
+// ════════════════════════════════════════════════════════════════
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    updateClock();
+    updDisp();
+  }
+});
+window.addEventListener('focus', ()=>{
+  updateClock();
+  updDisp();
+});
 function toggleTimer(){ if(config.timeSync&&config.timerMode==='pomodoro')return; timerId?pauseTimer():startTimer(); }
 function pauseTimer(){
   if(!timerId) return;
@@ -754,7 +773,7 @@ function pauseTimer(){
     const e=Math.floor((Date.now()-timerStartAt)/100);
     stopwatchTime=timerStartLeft+e;
   }
-  clearInterval(timerId); timerId=null; updateIcons(false);
+  stopTimerId(); updateIcons(false);
 }
 function startTimer(){
   if(config.timerMode==='normal'){
@@ -764,22 +783,38 @@ function startTimer(){
     document.getElementById('normalRunningArea').style.display='flex';
   }
   updateIcons(true);
-  if(timerId) clearInterval(timerId);
+  stopTimerId();
   timerStartAt=Date.now();
+
+  // Web Worker でバックグラウンド(サイドバー含む)スロットリングを回避
+  // timerId をWorkerオブジェクトで統一し、既存のstopTimer/resetTと互換
+  const mkWorker=(interval)=>{
+    const code=`let t=null;self.onmessage=e=>{if(e.data==='start')t=setInterval(()=>self.postMessage('tick'),${interval});if(e.data==='stop'){clearInterval(t);self.close();}};`;
+    const w=new Worker(URL.createObjectURL(new Blob([code],{type:'application/javascript'})));
+    w.postMessage('start');
+    return w;
+  };
+
+  if(timerId){ if(timerId.postMessage) timerId.postMessage('stop'); else stopTimerId(); }
+
   if(config.timerMode==='pomodoro'||config.timerMode==='normal'){
     timerStartLeft=timeLeft;
-    timerId=setInterval(()=>{
+    const w=mkWorker(500);
+    w.onmessage=()=>{
       const e=Math.floor((Date.now()-timerStartAt)/1000);
       timeLeft=timerStartLeft-e;
       if(timeLeft<=0){
-        timeLeft=0; clearInterval(timerId); timerId=null;
+        timeLeft=0; w.postMessage('stop'); timerId=null;
         if(config.timerMode==='pomodoro') moveNextPhase(true);
         else { playAlarm(); updDisp(); updateIcons(false); }
       } else updDisp();
-    },500);
+    };
+    timerId=w;
   } else {
     timerStartLeft=stopwatchTime;
-    timerId=setInterval(()=>{ const e=Math.floor((Date.now()-timerStartAt)/100); stopwatchTime=timerStartLeft+e; updDisp(); },100);
+    const w=mkWorker(100);
+    w.onmessage=()=>{ const e=Math.floor((Date.now()-timerStartAt)/100); stopwatchTime=timerStartLeft+e; updDisp(); };
+    timerId=w;
   }
 }
 function moveNextPhase(snd=true){
@@ -797,7 +832,7 @@ function moveNextPhase(snd=true){
 }
 function resetT(){
   if(config.timeSync&&config.timerMode==='pomodoro') return;
-  if(timerId){ clearInterval(timerId); timerId=null; }
+  if(timerId){ stopTimerId(); }
   if(config.timerMode==='pomodoro'){ state='focus'; currentSet=1; timeLeft=config.focusM*60; }
   else if(config.timerMode==='normal'){
     document.getElementById('normalInputArea').style.display='flex';
@@ -813,14 +848,14 @@ function resetT(){
 }
 function forcePhase(p){
   if(config.timeSync||config.timerMode!=='pomodoro') return;
-  if(timerId){ clearInterval(timerId); timerId=null; }
+  if(timerId){ stopTimerId(); }
   state=p;
   if(p==='focus') timeLeft=config.focusM*60;
   else if(p==='break') timeLeft=config.breakM*60;
   else timeLeft=config.longM*60;
   updDisp(); updateIcons(false);
 }
-function skipStep(){ if(config.timeSync||config.timerMode!=='pomodoro') return; if(timerId){clearInterval(timerId);timerId=null;} moveNextPhase(false); }
+function skipStep(){ if(config.timeSync||config.timerMode!=='pomodoro') return; if(timerId){stopTimerId();} moveNextPhase(false); }
 function recordLap(){
   if(config.timerMode!=='stopwatch'||stopwatchLaps.length>=3) return;
   const m=Math.floor(stopwatchTime/600), s=Math.floor((stopwatchTime%600)/10), ms=stopwatchTime%10;
@@ -1675,7 +1710,7 @@ function initUI(){
   }, {passive:false});
   document.getElementById('timeSyncToggle').onchange=e=>{
     config.timeSync=e.target.checked; saveToStorage();
-    if(config.timeSync){ if(timerId&&config.timerMode==='pomodoro'){clearInterval(timerId);timerId=null;} if(config.timerMode==='pomodoro')syncToClock(); }
+    if(config.timeSync){ if(timerId&&config.timerMode==='pomodoro'){stopTimerId();} if(config.timerMode==='pomodoro')syncToClock(); }
     else { ['startBtn','resetBtn','skipBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false;}); if(config.timerMode==='pomodoro')resetT(); }
     setTimerMode(config.timerMode);
   };
