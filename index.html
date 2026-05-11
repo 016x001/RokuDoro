@@ -87,12 +87,12 @@ body{background-color:var(--bg);color:var(--text-main);font-family:'Share Tech M
   .main-layout{flex-direction:column;height:auto;width:100%;max-width:500px;margin-left:auto;margin-right:auto;align-items:stretch}
   .left-side,.timer-side,.right-side{display:contents}
   .clock-card{order:1;width:100%}.timer-panel-wrap{order:2;width:100%}
-  .search-panel{order:3;width:100%}.notes-panel{order:4;width:100%;flex:none!important;height:auto!important;min-height:200px}
-  .todo-panel{order:5;width:100%;flex:none!important;height:auto!important;min-height:260px}
+  .search-panel{order:3;width:100%}.notes-panel{order:4;width:100%;flex:none!important;height:auto!important;min-height:160px}
+  .todo-panel{order:5;width:100%;flex:none!important;height:auto!important;min-height:200px}
   .yt-player-panel{order:6;width:100%}.video-controls-panel{order:7;width:100%}
   .ambient-panel-wrap{order:8;width:100%}
-  .notes-panel textarea{min-height:155px;height:155px}
-  .todo-panel .todo-list{max-height:360px}
+  .notes-panel textarea{min-height:120px;height:120px}
+  .todo-panel .todo-list{max-height:300px}
 }
 
 /* ── パネル ── */
@@ -774,7 +774,6 @@ function pauseTimer(){
     stopwatchTime=timerStartLeft+e;
   }
   stopTimerId(); updateIcons(false);
-  document.title='RokuDoro';
 }
 function startTimer(){
   if(config.timerMode==='normal'){
@@ -875,17 +874,15 @@ function updDisp(){
       document.getElementById('disp').innerText=ts;
       document.getElementById('statusTag').innerText=state.toUpperCase();
       document.getElementById('setLabel').innerText=`SET ${currentSet} / ${config.maxSets}`;
-      document.title=`${ts} ${state==='focus'?'🎯':'☕'} RokuDoro`;
-    } else { document.getElementById('normalDisp').innerText=ts; document.title=`${ts} ⏱ RokuDoro`; }
+      document.title=`${ts} - RokuDoro`;
+    } else { document.getElementById('normalDisp').innerText=ts; document.title=`${ts} - Timer`; }
   } else {
     const m=Math.floor(stopwatchTime/600), s=Math.floor((stopwatchTime%600)/10), ms=stopwatchTime%10;
     const ts=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ms}0`;
-    document.getElementById('stopwatchDisp').innerText=ts; document.title=`${ts} ⏱ RokuDoro`;
+    document.getElementById('stopwatchDisp').innerText=ts; document.title=`${ts} - SW`;
   }
   updateIcons(timerId!==null);
 }
-
-// Canvas でファビコンに残り分数を描画 → Vivaldiサイドバーでは動的favicon更新が反映されないため削除
 function updateIcons(run){
   const sync=config.timeSync&&config.timerMode==='pomodoro';
   document.getElementById('playIcon').style.display=(run&&!sync)?'none':'block';
