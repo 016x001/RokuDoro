@@ -775,9 +775,6 @@ function pauseTimer(){
   }
   stopTimerId(); updateIcons(false);
   document.title='RokuDoro';
-  // ファビコンをデフォルトに戻す
-  const link=document.querySelector("link[rel~='icon']");
-  if(link) link.href='favicon.ico';
 }
 function startTimer(){
   if(config.timerMode==='normal'){
@@ -880,37 +877,15 @@ function updDisp(){
       document.getElementById('setLabel').innerText=`SET ${currentSet} / ${config.maxSets}`;
       document.title=`${ts} ${state==='focus'?'🎯':'☕'} RokuDoro`;
     } else { document.getElementById('normalDisp').innerText=ts; document.title=`${ts} ⏱ RokuDoro`; }
-    updFavicon(ts, config.timerMode==='pomodoro'&&state!=='focus');
   } else {
     const m=Math.floor(stopwatchTime/600), s=Math.floor((stopwatchTime%600)/10), ms=stopwatchTime%10;
     const ts=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ms}0`;
     document.getElementById('stopwatchDisp').innerText=ts; document.title=`${ts} ⏱ RokuDoro`;
-    updFavicon(ts.slice(0,5), false);
   }
   updateIcons(timerId!==null);
 }
 
-// Canvas でファビコンに残り分数を描画
-function updFavicon(ts, isBreak){
-  try{
-    const sz=64;
-    const canvas=document.createElement('canvas'); canvas.width=sz; canvas.height=sz;
-    const ctx=canvas.getContext('2d');
-    // 背景円
-    ctx.beginPath(); ctx.arc(sz/2,sz/2,sz/2,0,Math.PI*2);
-    ctx.fillStyle=isBreak?'#4a9eff':'#ff6b6b'; ctx.fill();
-    // 残り分数のみ大きく表示
-    const mins=ts.split(':')[0];
-    ctx.fillStyle='#ffffff';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.font=`bold ${mins.length<=2?sz*0.52:sz*0.38}px monospace`;
-    ctx.fillText(mins, sz/2, sz/2);
-
-    let link=document.querySelector("link[rel~='icon']");
-    if(!link){ link=document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
-    link.href=canvas.toDataURL('image/png');
-  }catch(e){}
-}
+// Canvas でファビコンに残り分数を描画 → Vivaldiサイドバーでは動的favicon更新が反映されないため削除
 function updateIcons(run){
   const sync=config.timeSync&&config.timerMode==='pomodoro';
   document.getElementById('playIcon').style.display=(run&&!sync)?'none':'block';
