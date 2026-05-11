@@ -890,7 +890,7 @@ function updDisp(){
   updateIcons(timerId!==null);
 }
 
-// Canvas でファビコンに残り時間を描画
+// Canvas でファビコンに残り分数を描画
 function updFavicon(ts, isBreak){
   try{
     const sz=64;
@@ -899,17 +899,12 @@ function updFavicon(ts, isBreak){
     // 背景円
     ctx.beginPath(); ctx.arc(sz/2,sz/2,sz/2,0,Math.PI*2);
     ctx.fillStyle=isBreak?'#4a9eff':'#ff6b6b'; ctx.fill();
-    // 時間テキスト
+    // 残り分数のみ大きく表示
+    const mins=ts.split(':')[0];
     ctx.fillStyle='#ffffff';
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    // MM:SS を上下2行に分けて表示
-    const [mm,ss]=ts.split(':');
-    ctx.font=`bold ${sz*0.36}px monospace`;
-    ctx.fillText(mm, sz/2, sz*0.35);
-    ctx.fillText(ss, sz/2, sz*0.68);
-    // 区切り線
-    ctx.fillStyle='rgba(255,255,255,0.5)';
-    ctx.fillRect(sz*0.2, sz*0.51, sz*0.6, 1);
+    ctx.font=`bold ${mins.length<=2?sz*0.52:sz*0.38}px monospace`;
+    ctx.fillText(mins, sz/2, sz/2);
 
     let link=document.querySelector("link[rel~='icon']");
     if(!link){ link=document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
