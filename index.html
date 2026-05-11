@@ -774,6 +774,10 @@ function pauseTimer(){
     stopwatchTime=timerStartLeft+e;
   }
   stopTimerId(); updateIcons(false);
+  document.title='RokuDoro';
+  // ファビコンをデフォルトに戻す
+  const link=document.querySelector("link[rel~='icon']");
+  if(link) link.href='favicon.ico';
 }
 function startTimer(){
   if(config.timerMode==='normal'){
@@ -874,14 +878,43 @@ function updDisp(){
       document.getElementById('disp').innerText=ts;
       document.getElementById('statusTag').innerText=state.toUpperCase();
       document.getElementById('setLabel').innerText=`SET ${currentSet} / ${config.maxSets}`;
-      document.title=`${ts} - RokuDoro`;
-    } else { document.getElementById('normalDisp').innerText=ts; document.title=`${ts} - Timer`; }
+      document.title=`${ts} ${state==='focus'?'🎯':'☕'} RokuDoro`;
+    } else { document.getElementById('normalDisp').innerText=ts; document.title=`${ts} ⏱ RokuDoro`; }
+    updFavicon(ts, config.timerMode==='pomodoro'&&state!=='focus');
   } else {
     const m=Math.floor(stopwatchTime/600), s=Math.floor((stopwatchTime%600)/10), ms=stopwatchTime%10;
     const ts=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ms}0`;
-    document.getElementById('stopwatchDisp').innerText=ts; document.title=`${ts} - SW`;
+    document.getElementById('stopwatchDisp').innerText=ts; document.title=`${ts} ⏱ RokuDoro`;
+    updFavicon(ts.slice(0,5), false);
   }
   updateIcons(timerId!==null);
+}
+
+// Canvas でファビコンに残り時間を描画
+function updFavicon(ts, isBreak){
+  try{
+    const sz=64;
+    const canvas=document.createElement('canvas'); canvas.width=sz; canvas.height=sz;
+    const ctx=canvas.getContext('2d');
+    // 背景円
+    ctx.beginPath(); ctx.arc(sz/2,sz/2,sz/2,0,Math.PI*2);
+    ctx.fillStyle=isBreak?'#4a9eff':'#ff6b6b'; ctx.fill();
+    // 時間テキスト
+    ctx.fillStyle='#ffffff';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    // MM:SS を上下2行に分けて表示
+    const [mm,ss]=ts.split(':');
+    ctx.font=`bold ${sz*0.36}px monospace`;
+    ctx.fillText(mm, sz/2, sz*0.35);
+    ctx.fillText(ss, sz/2, sz*0.68);
+    // 区切り線
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fillRect(sz*0.2, sz*0.51, sz*0.6, 1);
+
+    let link=document.querySelector("link[rel~='icon']");
+    if(!link){ link=document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
+    link.href=canvas.toDataURL('image/png');
+  }catch(e){}
 }
 function updateIcons(run){
   const sync=config.timeSync&&config.timerMode==='pomodoro';
