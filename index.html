@@ -1077,7 +1077,7 @@ async function addNewVideo(){
   const raw = document.getElementById('ytUrl').value.trim();
   if(!raw) return;
   const lm = raw.match(/[?&]list=([A-Za-z0-9_-]+)/);
-  const vm = raw.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  const vm = raw.match(/(?:v=|youtu\.be\/|\/live\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
   if(lm){
     const listId=lm[1], entryId='pl_'+listId;
     if(playlist.find(v=>v.id===entryId)){ document.getElementById('ytUrl').value=''; return; }
@@ -1262,8 +1262,8 @@ async function addCustomAmbient(){
   const url=document.getElementById('customAmbUrl').value.trim(); if(!url) return;
   let vid='';
   try {
-    if(url.includes('v=')) vid=url.split('v=')[1].split('&')[0];
-    else if(url.includes('youtu.be/')) vid=url.split('youtu.be/')[1].split('?')[0];
+    const m=url.match(/(?:v=|youtu\.be\/|\/live\/|\/shorts\/)([A-Za-z0-9_-]{11})/);
+    if(m) vid=m[1];
     else vid=url;
     if(vid.length!==11) throw new Error('invalid');
   } catch(e){ alert('Please enter a valid YouTube URL'); return; }
