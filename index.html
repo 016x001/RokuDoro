@@ -720,8 +720,8 @@ let player, timerId=null, state='focus', currentSet=1;
 let timeLeft=config.focusM*60, stopwatchTime=0, stopwatchLaps=[];
 let timerStartAt=null, timerStartLeft=0;
 
-// Worker/setInterval 両対応の停止ヘルパー
-function stopTimerId(){ if(!timerId) return; if(timerId.postMessage) timerId.postMessage('stop'); else stopTimerId(); }
+// setInterval 停止ヘルパー
+function stopTimerId(){ if(!timerId) return; clearInterval(timerId); timerId=null; }
 const alarmAudio=document.getElementById('alarmAudio');
 alarmAudio.src=config.alarmUrl; alarmAudio.volume=config.alarmVol; alarmAudio.load();
 function playAlarm(){ alarmAudio.volume=config.alarmVol; alarmAudio.currentTime=0; alarmAudio.play(); }
@@ -786,38 +786,27 @@ function startTimer(){
   stopTimerId();
   timerStartAt=Date.now();
 
-  // Web Worker でバックグラウンド(サイドバー含む)スロットリングを回避
-  // timerId をWorkerオブジェクトで統一し、既存のstopTimer/resetTと互換
-  const mkWorker=(interval)=>{
-    const code=`let t=null;self.onmessage=e=>{if(e.data==='start')t=setInterval(()=>self.postMessage('tick'),${interval});if(e.data==='stop'){clearInterval(t);self.close();}};`;
-    const w=new Worker(URL.createObjectURL(new Blob([code],{type:'application/javascript'})));
-    w.postMessage('start');
-    return w;
-  };
-
-  if(timerId){ if(timerId.postMessage) timerId.postMessage('stop'); else stopTimerId(); }
-
   if(config.timerMode==='pomodoro'||config.timerMode==='normal'){
     timerStartLeft=timeLeft;
-    const w=mkWorker(500);
-    w.onmessage=()=>{
+    timerId=setInterval(()=>{
       const e=Math.floor((Date.now()-timerStartAt)/1000);
       timeLeft=timerStartLeft-e;
       if(timeLeft<=0){
-        timeLeft=0; w.postMessage('stop'); timerId=null;
-        if(config.timerMode==='pomodoro') moveNextPhase(true);
+        timeLeft=0; stopTimerId();
+        if(config.timerMode==='pomodoro') moveNextPhase(true, true);
         else { playAlarm(); updDisp(); updateIcons(false); }
       } else updDisp();
-    };
-    timerId=w;
+    }, 500);
   } else {
     timerStartLeft=stopwatchTime;
-    const w=mkWorker(100);
-    w.onmessage=()=>{ const e=Math.floor((Date.now()-timerStartAt)/100); stopwatchTime=timerStartLeft+e; updDisp(); };
-    timerId=w;
+    timerId=setInterval(()=>{
+      const e=Math.floor((Date.now()-timerStartAt)/100);
+      stopwatchTime=timerStartLeft+e;
+      updDisp();
+    }, 100);
   }
 }
-function moveNextPhase(snd=true){
+function moveNextPhase(snd=true, wasRunning=false){
   if(config.timerMode!=='pomodoro') return;
   if(snd) playAlarm();
   if(state==='focus'){
@@ -828,7 +817,7 @@ function moveNextPhase(snd=true){
     state='focus'; timeLeft=config.focusM*60;
   }
   updDisp();
-  if(config.autoStart&&!config.timeSync) startTimer(); else updateIcons(false);
+  if((config.autoStart||wasRunning)&&!config.timeSync) startTimer(); else updateIcons(false);
 }
 function resetT(){
   if(config.timeSync&&config.timerMode==='pomodoro') return;
