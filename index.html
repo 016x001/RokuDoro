@@ -49,14 +49,7 @@
 [data-theme^="light"] .settings-popup{background:var(--panel)}
 [data-theme^="light"] details{background:var(--bg)}
 [data-theme^="light"] .sound-opt{color:var(--text-dim)}
-[data-theme^="light"] .calc-display{background:var(--bg);border-color:var(--border)}
-[data-theme^="light"] #calcMain{color:var(--text-main)}
-[data-theme^="light"] .calc-sub{color:var(--text-dim)}
-[data-theme^="light"] .calc-btn{background:var(--bg);border-color:var(--border);color:var(--text-main)}
-[data-theme^="light"] .calc-btn.op{background:var(--panel);color:var(--accent)}
-[data-theme^="light"] .calc-btn.eq{background:var(--accent);color:#fff}
 [data-theme^="light"] .float-win{background:var(--panel)}
-[data-theme^="light"] .float-win-header{border-color:var(--border)}
 [data-theme^="light"] .shortcut-key{background:var(--bg);border-color:var(--border);color:var(--text-main)}
 [data-theme^="light"] .slider-round{background-color:var(--border)}
 [data-theme^="light"] .slider-round:before{background-color:var(--text-dim)}
@@ -118,8 +111,8 @@ body{background-color:var(--bg);color:var(--text-main);font-family:'Share Tech M
 .btn-phase:hover{border-color:var(--accent);color:var(--text-main)}
 .btn-phase.active{background:var(--accent);color:#000;border-color:var(--accent)}
 .btn-phase:disabled{opacity:.25;cursor:not-allowed;pointer-events:none}
-.tool-btn{background:#111;border:1px solid #2a2a2a;border-radius:8px;color:#888;font-size:10px;padding:4px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-weight:bold;transition:.2s;display:flex;align-items:center;gap:5px}
-.tool-btn:hover{color:#fff;border-color:#555}.tool-btn.active{background:#fff;color:#000;border-color:#fff}
+.tool-btn{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:10px;padding:4px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-weight:bold;transition:.2s;display:flex;align-items:center;gap:5px}
+.tool-btn:hover{color:var(--text-main);border-color:var(--text-dim)}.tool-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 .panel-collapse-btn{background:transparent;border:none;color:var(--text-dim);cursor:pointer;padding:0;line-height:1;transition:.2s;display:flex;align-items:center}
 .panel-collapse-btn:hover{color:var(--text-main)}
 .panel-collapse-btn svg{transition:transform .3s}
@@ -186,24 +179,24 @@ input:checked+.slider-round:before{transform:translateX(18px);background-color:#
 .search-hint{font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.5}
 
 /* ── フローティングウィンドウ ── */
-.float-win{position:fixed;background:var(--panel);border:1px solid var(--border);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.9);display:none;flex-direction:column;z-index:200;overflow:hidden}
+.float-win{position:fixed;background:var(--panel);border:1px solid var(--border);border-radius:24px;box-shadow:none;display:none;flex-direction:column;z-index:200;overflow:hidden}
 .float-win.open{display:flex}
-.float-win-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 8px;cursor:grab;user-select:none;border-bottom:1px solid #1a1a1a;flex-shrink:0}
+.float-win-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 8px;cursor:grab;user-select:none;border-bottom:1px solid var(--border);flex-shrink:0}
 .float-win-header:active{cursor:grabbing}
 .float-win-title{font-size:10px;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;font-weight:900;font-family:'Share Tech Mono',monospace}
-.float-win-close{background:transparent;border:none;color:#555;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;transition:.15s}
-.float-win-close:hover{color:#fff}
+.float-win-close{background:transparent;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;transition:.15s}
+.float-win-close:hover{color:var(--text-main)}
 .float-win-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
 
 /* ── 電卓 ── */
 #calcWin{width:280px}
-.calc-display{background:#000;border:1px solid #222;border-radius:12px;padding:10px 16px;text-align:right;font-family:'Share Tech Mono',monospace;word-break:break-all}
-.calc-sub{font-size:13px;color:#555;min-height:18px}
+.calc-display{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:10px 16px;text-align:right;font-family:'Share Tech Mono',monospace;word-break:break-all}
+.calc-sub{font-size:13px;color:var(--text-dim);min-height:18px}
 #calcMain{font-size:36px;color:#fff;line-height:1.2}
 .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.calc-btn{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#ccc;font-family:'Share Tech Mono',monospace;font-size:15px;padding:12px 0;cursor:pointer;transition:.15s}
-.calc-btn:hover{background:#2a2a2a;color:#fff}
-.calc-btn.op{color:#fff;background:#222}.calc-btn.eq{background:#fff;color:#000}.calc-btn.eq:hover{background:#ddd}
+.calc-btn{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text-main);font-family:'Share Tech Mono',monospace;font-size:15px;padding:12px 0;cursor:pointer;transition:.15s}
+.calc-btn:hover{background:var(--border);color:var(--text-main)}
+.calc-btn.op{color:var(--accent);background:var(--panel)}.calc-btn.eq{background:var(--accent);color:var(--bg)}.calc-btn.eq:hover{opacity:.85}
 .calc-btn.clr{color:#ff6b6b}.calc-btn.span2{grid-column:span 2}
 
 /* ── カレンダー ── */
@@ -223,9 +216,9 @@ input:checked+.slider-round:before{transform:translateX(18px);background-color:#
 .todo-list{margin-top:15px;flex:1;min-height:0}
 .todo-item{display:flex;align-items:center;gap:12px;padding:6px 15px;margin-bottom:5px;background:#111;border:1px solid #222;border-left:6px solid #333;border-radius:12px;font-size:13px;width:100%;transition:.3s;cursor:move;color:#ccc}
 .todo-item.done{opacity:.4;text-decoration:line-through;color:#777}
-.custom-checkbox{width:18px;height:18px;border:2px solid #333;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;background:#000;flex-shrink:0}
-.custom-checkbox.checked{background:#fff;border-color:#fff}
-.custom-checkbox.checked::after{content:'✓';color:#000;font-size:12px;font-weight:bold}
+.custom-checkbox{width:18px;height:18px;border:2px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;background:var(--bg);flex-shrink:0}
+.custom-checkbox.checked{background:var(--accent);border-color:var(--accent)}
+.custom-checkbox.checked::after{content:'✓';color:var(--bg);font-size:12px;font-weight:bold}
 .todo-text{flex:1;outline:none;transition:.2s;word-break:break-all}
 .todo-text[contenteditable="true"]{background:#222;padding:2px 5px;border-radius:4px;color:#fff;cursor:text}
 .color-selector-btn{width:32px;height:32px;border-radius:10px;border:1px solid #333;cursor:pointer;flex-shrink:0;transition:.2s}
@@ -311,14 +304,16 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
 /* ── 壁紙時カード透過 ── */
 body.has-wallpaper .panel,
 body.has-wallpaper .video-controls-panel,
-body.has-wallpaper .search-panel{
+body.has-wallpaper .search-panel,
+body.has-wallpaper .float-win{
   background:rgba(10,10,10,var(--card-opacity,.6));
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
 }
 [data-theme^="light"] body.has-wallpaper .panel,
 [data-theme^="light"] body.has-wallpaper .video-controls-panel,
-[data-theme^="light"] body.has-wallpaper .search-panel{
+[data-theme^="light"] body.has-wallpaper .search-panel,
+[data-theme^="light"] body.has-wallpaper .float-win{
   background:rgba(255,255,255,var(--card-opacity,.6));
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
@@ -331,6 +326,9 @@ body.has-wallpaper .search-panel{
 .wp-thumb.active{border-color:var(--accent);}
 .wp-none-btn{width:52px;height:36px;border-radius:8px;border:2px solid var(--border);background:#111;color:var(--text-dim);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;font-family:'Share Tech Mono',monospace;}
 .wp-none-btn:hover,.wp-none-btn.active{border-color:var(--accent);color:var(--text-main);}
+.wp-custom-wrap{position:relative;display:inline-flex;flex-shrink:0;}
+.wp-del-btn{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:#e55;color:#fff;border:none;font-size:10px;line-height:16px;text-align:center;cursor:pointer;display:none;padding:0;z-index:2;}
+.wp-custom-wrap:hover .wp-del-btn{display:block;}
 </style>
 </head>
 <body>
@@ -532,13 +530,15 @@ body.has-wallpaper .search-panel{
     <!-- Wallpaper -->
     <div class="setting-item compact" style="margin-top:4px;">
       <div style="margin-bottom:8px;"><span class="setting-label-text">🖼 Wallpaper</span></div>
-      <!-- サムネイル行 -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+      <!-- サムネイル行（プリセット） -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
         <button class="wp-none-btn active" id="wpNoneBtn" onclick="setWallpaper(null)">NONE</button>
         <img class="wp-thumb" src="wallpaper/rr-abrot-pNIgH0y3upM-unsplash .jpg"   alt="Cafe"  onclick="setWallpaper('local','wallpaper/rr-abrot-pNIgH0y3upM-unsplash .jpg','cafe')"   data-wp="cafe">
         <img class="wp-thumb" src="wallpaper/unseen-studio-WvuTnXz1hSc-unsplash.jpg" alt="Desk"  onclick="setWallpaper('local','wallpaper/unseen-studio-WvuTnXz1hSc-unsplash.jpg','desk')"   data-wp="desk">
         <img class="wp-thumb" src="wallpaper/white-rainforest-Pubp6-BHAVI-unsplash.jpg" alt="Stars" onclick="setWallpaper('local','wallpaper/white-rainforest-Pubp6-BHAVI-unsplash.jpg','stars')" data-wp="stars">
       </div>
+      <!-- カスタム壁紙行 -->
+      <div id="wpCustomRow" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;min-height:0;"></div>
       <!-- 不透明度スライダー -->
       <div class="setting-header" style="margin-bottom:6px;">
         <span class="setting-label-text" style="font-size:10px;">Opacity</span>
@@ -754,7 +754,8 @@ let config = {
   ambientVer: savedConfig.ambientVer||null,
   wallpaper: savedConfig.wallpaper||null,
   wallpaperId: savedConfig.wallpaperId||null,
-  wallpaperOpacity: savedConfig.wallpaperOpacity!==undefined?savedConfig.wallpaperOpacity:50
+  wallpaperOpacity: savedConfig.wallpaperOpacity!==undefined?savedConfig.wallpaperOpacity:50,
+  customWallpapers: savedConfig.customWallpapers||[]
 };
 
 function saveToStorage(){ LS.set(STORAGE_KEY, JSON.stringify(config)); }
@@ -1519,6 +1520,21 @@ function initTheme(){ currentColorKey=LS.get('roku_theme_color')||'dark'; isLigh
 // ════════════════════════════════════════════════════════════════
 // WALLPAPER
 // ════════════════════════════════════════════════════════════════
+function _renderCustomWpThumbs(){
+  const row=document.getElementById('wpCustomRow'); if(!row) return;
+  row.innerHTML='';
+  config.customWallpapers.forEach((wp,i)=>{
+    const wrap=document.createElement('div'); wrap.className='wp-custom-wrap';
+    const img=document.createElement('img');
+    img.className='wp-thumb'; img.src=wp.src; img.alt='Custom '+(i+1);
+    img.dataset.wp='custom_'+wp.id;
+    img.onclick=()=>setWallpaper('custom', wp.src, 'custom_'+wp.id);
+    const del=document.createElement('button');
+    del.className='wp-del-btn'; del.textContent='✕'; del.title='Delete';
+    del.onclick=(e)=>{ e.stopPropagation(); deleteCustomWp(wp.id); };
+    wrap.append(img,del); row.appendChild(wrap);
+  });
+}
 function _applyWallpaper(){
   const layer=document.getElementById('wallpaperLayer');
   if(!layer) return;
@@ -1529,20 +1545,15 @@ function _applyWallpaper(){
     document.body.classList.remove('has-wallpaper');
     document.documentElement.style.removeProperty('--card-opacity');
   } else {
-    const url = wp.startsWith('data:') || wp.startsWith('http') ? wp : wp;
-    layer.style.backgroundImage=`url(${JSON.stringify(url)})`;
+    layer.style.backgroundImage=`url(${JSON.stringify(wp)})`;
     layer.style.opacity='1';
     document.body.classList.add('has-wallpaper');
-    // 不透明度スライダー値(0-100)をカード透過に変換
-    // スライダー100% = カード完全不透明(1.0)、0% = ほぼ透明(0.05)
-    const cardOpacity = (0.05 + (config.wallpaperOpacity / 100) * 0.95).toFixed(2);
+    const cardOpacity=(0.05+(config.wallpaperOpacity/100)*0.95).toFixed(2);
     document.documentElement.style.setProperty('--card-opacity', cardOpacity);
   }
-  // サムネイルのactiveを更新
   document.querySelectorAll('.wp-thumb').forEach(t=>t.classList.toggle('active', t.dataset.wp===config.wallpaperId));
   const noneBtn=document.getElementById('wpNoneBtn');
   if(noneBtn) noneBtn.classList.toggle('active',!config.wallpaper);
-  // スライダー同期
   const sl=document.getElementById('wpOpacitySlider');
   const vl=document.getElementById('wpOpacityVal');
   if(sl) sl.value=config.wallpaperOpacity;
@@ -1555,21 +1566,42 @@ function setWallpaper(type, src, id){
 }
 function setWpOpacity(val){
   config.wallpaperOpacity=+val;
-  document.getElementById('wpOpacityVal').textContent=val+'%';
+  const vl=document.getElementById('wpOpacityVal');
+  if(vl) vl.textContent=val+'%';
   saveToStorage(); _applyWallpaper();
 }
 function loadWpLocalFile(e){
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=ev=>{ setWallpaper('local', ev.target.result, 'custom_local'); };
+  reader.onload=ev=>{
+    const id='wp_'+Date.now();
+    config.customWallpapers.push({id, src:ev.target.result});
+    saveToStorage();
+    _renderCustomWpThumbs();
+    setWallpaper('custom', ev.target.result, 'custom_'+id);
+  };
   reader.readAsDataURL(file);
   e.target.value='';
 }
 function loadWpUrl(){
   const url=document.getElementById('wpUrlInput').value.trim();
   if(!url) return;
-  setWallpaper('url', url, 'custom_url');
+  const id='wp_'+Date.now();
+  config.customWallpapers.push({id, src:url});
+  saveToStorage();
+  _renderCustomWpThumbs();
+  setWallpaper('custom', url, 'custom_'+id);
   document.getElementById('wpUrlInput').value='';
+}
+function deleteCustomWp(id){
+  const idx=config.customWallpapers.findIndex(w=>w.id===id);
+  if(idx===-1) return;
+  config.customWallpapers.splice(idx,1);
+  // 削除した壁紙が現在選択中なら解除
+  if(config.wallpaperId==='custom_'+id){ config.wallpaper=null; config.wallpaperId=null; }
+  saveToStorage();
+  _renderCustomWpThumbs();
+  _applyWallpaper();
 }
 function wpSwitchTab(tab){
   const isLocal=tab==='local';
@@ -1585,7 +1617,7 @@ function wpSwitchTab(tab){
     tu.style.borderColor=isLocal?'var(--border)':'var(--accent)';
   }
 }
-function initWallpaper(){ _applyWallpaper(); }
+function initWallpaper(){ _renderCustomWpThumbs(); _applyWallpaper(); }
 
 // ════════════════════════════════════════════════════════════════
 // FLOAT WINDOWS
@@ -1831,6 +1863,22 @@ function initUI(){
     if(player&&typeof player.setVolume==='function') player.setVolume(newVal);
     saveToStorage();
   }, {passive:false});
+
+  // ── 全スライダー ホイール対応 ──────────────────────────
+  [
+    { id:'fSlider',  min:1,  max:60,  step:1, onSet: v=>{ config.focusM=v;  document.getElementById('fVal').innerText=v+'M';  saveToStorage(); if(!config.timeSync&&config.timerMode==='pomodoro')resetT(); } },
+    { id:'bSlider',  min:1,  max:30,  step:1, onSet: v=>{ config.breakM=v;  document.getElementById('bVal').innerText=v+'M';  saveToStorage(); } },
+    { id:'lbSlider', min:5,  max:60,  step:1, onSet: v=>{ config.longM=v;   document.getElementById('lbVal').innerText=v+'M'; saveToStorage(); } },
+    { id:'sSlider',  min:1,  max:10,  step:1, onSet: v=>{ config.maxSets=v; document.getElementById('sVal').innerText=v;      saveToStorage(); if(config.timerMode==='pomodoro')updDisp(); } },
+    { id:'wpOpacitySlider', min:0, max:100, step:2, onSet: v=>{ setWpOpacity(v); } },
+  ].forEach(({id,min,max,step,onSet})=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('wheel', e=>{
+      e.preventDefault();
+      const newVal=Math.min(max,Math.max(min,+el.value+(e.deltaY<0?step:-step)));
+      el.value=newVal; onSet(newVal);
+    }, {passive:false});
+  });
   document.getElementById('timeSyncToggle').onchange=e=>{
     config.timeSync=e.target.checked; saveToStorage();
     if(config.timeSync){ if(timerId&&config.timerMode==='pomodoro'){stopTimerId();} if(config.timerMode==='pomodoro')syncToClock(); }
