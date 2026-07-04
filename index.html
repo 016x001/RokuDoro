@@ -1245,15 +1245,66 @@ function ytPlLoop(){
 // ════════════════════════════════════════════════════════════════
 // AMBIENT
 // ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// WEB AUDIO CONTEXT  （ambient ローカル音源のシームレスループ用）
+// ════════════════════════════════════════════════════════════════
+let _audioCtx=null;
+function getAudioCtx(){
+  if(!_audioCtx||_audioCtx.state==='closed'){
+    _audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  }
+  // モバイル等でsuspendされている場合はresumeしておく
+  if(_audioCtx.state==='suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+// ローカル音源を fetch→decodeAudioData してバッファを返す（キャッシュあり）
+const _ambBufCache={};
+async function _fetchAmbBuf(src){
+  if(_ambBufCache[src]) return _ambBufCache[src];
+  const res=await fetch(src);
+  const ab=await res.arrayBuffer();
+  const buf=await getAudioCtx().decodeAudioData(ab);
+  _ambBufCache[src]=buf;
+  return buf;
+}
+
+// Web Audio でシームレスループ再生を開始する
+// 返り値: { gainNode, sourceNode, stop(), setVol(v) }
+function _startWaLoop(buffer, vol){
+  const ctx=getAudioCtx();
+  const gain=ctx.createGain();
+  gain.gain.value=vol;
+  gain.connect(ctx.destination);
+  const src=ctx.createBufferSource();
+  src.buffer=buffer;
+  src.loop=true;          // サンプル精度ループ → 無音なし
+  src.connect(gain);
+  src.start(0);
+  return {
+    gainNode:gain, sourceNode:src,
+    stop(){ try{ src.stop(); }catch(e){} gain.disconnect(); },
+    setVol(v){ gain.gain.setTargetAtTime(v, ctx.currentTime, 0.01); }
+  };
+}
+
 let ambientPlayers={};
 function initAmbientPlayers(){
   document.getElementById('ambientYoutubeHidden').innerHTML='';
   config.ambientList.forEach(amb=>{
     if(amb.type==='local'||amb.type==='localFile'){
-      if(!ambientPlayers[amb.id]){ const a=new Audio(); a.loop=true; ambientPlayers[amb.id]=a; }
-      const a=ambientPlayers[amb.id]; a.volume=amb.vol/100;
-      if(amb.playing){ if(!a.src||a.src===location.href)a.src=amb.src; a.play().catch(()=>{}); }
-      else { a.pause(); a.src=''; a.load(); }
+      // 既存プレイヤーを停止・破棄
+      if(ambientPlayers[amb.id]?.stop) ambientPlayers[amb.id].stop();
+      delete ambientPlayers[amb.id];
+      if(amb.playing){
+        // 非同期でバッファ取得→再生
+        _fetchAmbBuf(amb.src).then(buf=>{
+          // 他で既に再生開始済みなら重複しない
+          if(ambientPlayers[amb.id]) return;
+          const p=_startWaLoop(buf, amb.vol/100);
+          p.type='wa'; ambientPlayers[amb.id]=p;
+        }).catch(err=>console.warn('Ambient load failed:',amb.src,err));
+      }
     } else if(amb.type==='yt'){
       const did='yt-amb-'+amb.id; const d=document.createElement('div'); d.id=did;
       document.getElementById('ambientYoutubeHidden').appendChild(d);
@@ -1295,13 +1346,21 @@ function toggleAmbPlay(id){
   const a=config.ambientList.find(x=>x.id===id); if(!a) return;
   a.playing=!a.playing; saveToStorage();
   const p=ambientPlayers[id];
-  if(p){
-    if(a.type==='local'||a.type==='localFile'){
-      if(a.playing){ if(!p.src||p.src===location.href)p.src=a.src; p.play().catch(()=>{}); }
-      else { p.pause(); p.src=''; p.load(); }
-    } else if(a.type==='yt'&&p.playVideo){
-      if(a.playing) p.playVideo(); else p.pauseVideo();
+  if(a.type==='local'||a.type==='localFile'){
+    if(a.playing){
+      // 既に再生中なら無視
+      if(p) { renderAmbientUI(); return; }
+      _fetchAmbBuf(a.src).then(buf=>{
+        if(!config.ambientList.find(x=>x.id===id)?.playing) return; // キャンセル済み
+        const np=_startWaLoop(buf, a.vol/100);
+        np.type='wa'; ambientPlayers[id]=np;
+      }).catch(err=>console.warn('Ambient load failed:',err));
+    } else {
+      if(p?.stop) p.stop();
+      delete ambientPlayers[id];
     }
+  } else if(a.type==='yt'&&p?.playVideo){
+    if(a.playing) p.playVideo(); else p.pauseVideo();
   }
   renderAmbientUI();
 }
@@ -1309,7 +1368,10 @@ function updateAmbVol(id,v){
   const a=config.ambientList.find(x=>x.id===id); if(!a) return;
   a.vol=parseInt(v); saveToStorage();
   const p=ambientPlayers[id];
-  if(p){ if(a.type==='local'||a.type==='localFile') p.volume=a.vol/100; else if(p.setVolume) p.setVolume(a.vol); }
+  if(p){
+    if(a.type==='local'||a.type==='localFile'){ if(p.setVol) p.setVol(a.vol/100); }
+    else if(p.setVolume) p.setVolume(a.vol);
+  }
 }
 async function addCustomAmbient(){
   const url=document.getElementById('customAmbUrl').value.trim(); if(!url) return;
@@ -1329,10 +1391,14 @@ async function addCustomAmbient(){
 function addLocalAmbient(e){
   const files=Array.from(e.target.files);
   files.filter(f=>f.type.startsWith('audio/')||f.name.match(/\.(mp3|wav|m4a|ogg|flac|aac)$/i)).forEach(f=>{
-    const url=URL.createObjectURL(f), nid='lf_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-    const a=new Audio(url); a.loop=true; ambientPlayers[nid]=a;
+    const url=URL.createObjectURL(f);
+    const nid='lf_'+Date.now()+'_'+Math.random().toString(36).slice(2);
     config.ambientList.push({id:nid,name:f.name.replace(/\.[^/.]+$/,''),type:'localFile',src:url,vol:50,playing:true});
-    a.volume=0.5; a.play().catch(()=>{});
+    _fetchAmbBuf(url).then(buf=>{
+      const p=_startWaLoop(buf, 0.5);
+      p.type='wa'; ambientPlayers[nid]=p;
+      renderAmbientUI();
+    }).catch(err=>console.warn('Local ambient load failed:',err));
   });
   saveToStorage(); renderAmbientUI(); e.target.value='';
 }
@@ -1340,9 +1406,11 @@ function deleteAmb(id){
   if(!confirm('Remove this ambient sound?')) return;
   const a=config.ambientList.find(x=>x.id===id);
   config.ambientList=config.ambientList.filter(x=>x.id!==id); saveToStorage();
-  const p=ambientPlayers[id]; if(p){ if(p.destroy)p.destroy(); else if(p.pause)p.pause(); delete ambientPlayers[id]; }
+  const p=ambientPlayers[id];
+  if(p){ if(p.stop) p.stop(); else if(p.destroy) p.destroy(); delete ambientPlayers[id]; }
   if(a?.type==='localFile'&&a.src) URL.revokeObjectURL(a.src);
-  const div=document.getElementById('yt-amb-'+id); if(div)div.remove();
+  if(a?.src) delete _ambBufCache[a.src];
+  const div=document.getElementById('yt-amb-'+id); if(div) div.remove();
   renderAmbientUI();
 }
 
