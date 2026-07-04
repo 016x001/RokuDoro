@@ -70,8 +70,10 @@
 [data-theme^="light"] .search-site-item{background:var(--bg);border-color:var(--border)}
 [data-theme^="light"] .mode-toggle-btn{background:var(--bg)}
 [data-theme^="light"] .shortcut-overlay{background:rgba(0,0,0,.5)}
-[data-theme^="light"] .ytpl-btn{background:var(--bg);border-color:var(--border)}
-[data-theme^="light"] .ytpl-btn:hover:not(:disabled){background:var(--border)}
+[data-theme^="light"] .ytpl-btn{background:var(--bg);border-color:var(--border);color:var(--text-dim)}
+[data-theme^="light"] .ytpl-btn:hover:not(:disabled){background:var(--border);color:var(--text-main)}
+[data-theme^="light"] .add-mini-btn{background:var(--accent);color:#fff}
+[data-theme^="light"] .search-add-inputs input{background:var(--bg);border-color:var(--border);color:var(--text-main)}
 
 /* ── ベース ── */
 *{box-sizing:border-box}
@@ -305,9 +307,34 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
 
 /* ── フッター ── */
 .credit-footer{text-align:center;color:#444;font-size:9px;text-transform:uppercase;margin-bottom:20px;line-height:1.8}
+
+/* ── 壁紙時カード透過 ── */
+body.has-wallpaper .panel,
+body.has-wallpaper .video-controls-panel,
+body.has-wallpaper .search-panel{
+  background:rgba(10,10,10,var(--card-opacity,.6));
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+[data-theme^="light"] body.has-wallpaper .panel,
+[data-theme^="light"] body.has-wallpaper .video-controls-panel,
+[data-theme^="light"] body.has-wallpaper .search-panel{
+  background:rgba(255,255,255,var(--card-opacity,.6));
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+
+/* ── 壁紙 ── */
+#wallpaperLayer{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;background-repeat:no-repeat;transition:opacity .4s;}
+.wp-thumb{width:52px;height:36px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:.2s;flex-shrink:0;}
+.wp-thumb:hover{transform:scale(1.08);}
+.wp-thumb.active{border-color:var(--accent);}
+.wp-none-btn{width:52px;height:36px;border-radius:8px;border:2px solid var(--border);background:#111;color:var(--text-dim);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;font-family:'Share Tech Mono',monospace;}
+.wp-none-btn:hover,.wp-none-btn.active{border-color:var(--accent);color:var(--text-main);}
 </style>
 </head>
 <body>
+<div id="wallpaperLayer"></div>
 <div class="main-layout">
 
   <!-- ── LEFT ── -->
@@ -502,6 +529,38 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
         <div class="theme-dot"        data-theme="rose"   style="background:#fb7185;" onclick="applyColor('rose')"></div>
       </div>
     </div>
+    <!-- Wallpaper -->
+    <div class="setting-item compact" style="margin-top:4px;">
+      <div style="margin-bottom:8px;"><span class="setting-label-text">🖼 Wallpaper</span></div>
+      <!-- サムネイル行 -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+        <button class="wp-none-btn active" id="wpNoneBtn" onclick="setWallpaper(null)">NONE</button>
+        <img class="wp-thumb" src="wallpaper/rr-abrot-pNIgH0y3upM-unsplash .jpg"   alt="Cafe"  onclick="setWallpaper('local','wallpaper/rr-abrot-pNIgH0y3upM-unsplash .jpg','cafe')"   data-wp="cafe">
+        <img class="wp-thumb" src="wallpaper/unseen-studio-WvuTnXz1hSc-unsplash.jpg" alt="Desk"  onclick="setWallpaper('local','wallpaper/unseen-studio-WvuTnXz1hSc-unsplash.jpg','desk')"   data-wp="desk">
+        <img class="wp-thumb" src="wallpaper/white-rainforest-Pubp6-BHAVI-unsplash.jpg" alt="Stars" onclick="setWallpaper('local','wallpaper/white-rainforest-Pubp6-BHAVI-unsplash.jpg','stars')" data-wp="stars">
+      </div>
+      <!-- 不透明度スライダー -->
+      <div class="setting-header" style="margin-bottom:6px;">
+        <span class="setting-label-text" style="font-size:10px;">Opacity</span>
+        <span class="setting-value-text pixel-font" id="wpOpacityVal">50%</span>
+      </div>
+      <input type="range" id="wpOpacitySlider" min="0" max="100" value="50" oninput="setWpOpacity(this.value)">
+      <!-- ローカル / URL 切り替え -->
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <button id="wpTabLocal" onclick="wpSwitchTab('local')" style="flex:1;padding:6px 0;font-size:10px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#000;font-family:'Share Tech Mono',monospace;cursor:pointer;">📁 Local</button>
+        <button id="wpTabUrl"   onclick="wpSwitchTab('url')"   style="flex:1;padding:6px 0;font-size:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Share Tech Mono',monospace;cursor:pointer;">🔗 URL</button>
+      </div>
+      <div id="wpLocalArea" style="margin-top:8px;">
+        <input type="file" id="wpLocalFileInput" accept="image/*,.gif" style="display:none;" onchange="loadWpLocalFile(event)">
+        <button onclick="document.getElementById('wpLocalFileInput').click()" style="width:100%;padding:8px 0;font-size:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Share Tech Mono',monospace;cursor:pointer;">📂 Choose File (jpg / png / gif …)</button>
+      </div>
+      <div id="wpUrlArea" style="display:none;margin-top:8px;">
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="wpUrlInput" placeholder="https://example.com/image.jpg" style="flex:1;font-size:10px;height:32px;">
+          <button onclick="loadWpUrl()" style="height:32px;padding:0 10px;background:#333;color:var(--text-main);border:1px solid #555;border-radius:8px;font-size:10px;font-family:'Share Tech Mono',monospace;cursor:pointer;">Set</button>
+        </div>
+      </div>
+    </div>
     <!-- URL Sync -->
     <div class="setting-item" style="margin-top:4px;">
       <div style="margin-bottom:8px;"><span class="setting-label-text">🔗 URL Sync</span></div>
@@ -616,6 +675,7 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
 <footer class="credit-footer">
   <div>※当サイトのイラスト全ては原作、企業さまとは一切関係ありません</div>
   <div>Design: @016x001 / ALARM SOUND: Springin' Sound Stock / AMBIENT SOUND: VSQ plus+ / System: Claude</div>
+  <div>WALLPAPER PHOTOS: <a href="https://unsplash.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Unsplash</a></div>
 </footer>
 <audio id="alarmAudio" preload="auto"></audio>
 
@@ -691,7 +751,10 @@ let config = {
   currentVid: savedConfig.currentVid||'jfKfPfyJRdk', ytVol: savedConfig.ytVol||50,
   timerMode: savedConfig.timerMode||'pomodoro', normalTimerInputVal: savedConfig.normalTimerInputVal||'10:00',
   ambientList: savedConfig.ambientList||JSON.parse(JSON.stringify(DEFAULT_AMBIENT)),
-  ambientVer: savedConfig.ambientVer||null
+  ambientVer: savedConfig.ambientVer||null,
+  wallpaper: savedConfig.wallpaper||null,
+  wallpaperId: savedConfig.wallpaperId||null,
+  wallpaperOpacity: savedConfig.wallpaperOpacity!==undefined?savedConfig.wallpaperOpacity:50
 };
 
 function saveToStorage(){ LS.set(STORAGE_KEY, JSON.stringify(config)); }
@@ -1454,6 +1517,77 @@ function _applyTheme(){
 function initTheme(){ currentColorKey=LS.get('roku_theme_color')||'dark'; isLightMode=LS.get('roku_theme_light')==='1'; _applyTheme(); }
 
 // ════════════════════════════════════════════════════════════════
+// WALLPAPER
+// ════════════════════════════════════════════════════════════════
+function _applyWallpaper(){
+  const layer=document.getElementById('wallpaperLayer');
+  if(!layer) return;
+  const wp=config.wallpaper;
+  if(!wp){
+    layer.style.backgroundImage='none';
+    layer.style.opacity='0';
+    document.body.classList.remove('has-wallpaper');
+    document.documentElement.style.removeProperty('--card-opacity');
+  } else {
+    const url = wp.startsWith('data:') || wp.startsWith('http') ? wp : wp;
+    layer.style.backgroundImage=`url(${JSON.stringify(url)})`;
+    layer.style.opacity='1';
+    document.body.classList.add('has-wallpaper');
+    // 不透明度スライダー値(0-100)をカード透過に変換
+    // スライダー100% = カード完全不透明(1.0)、0% = ほぼ透明(0.05)
+    const cardOpacity = (0.05 + (config.wallpaperOpacity / 100) * 0.95).toFixed(2);
+    document.documentElement.style.setProperty('--card-opacity', cardOpacity);
+  }
+  // サムネイルのactiveを更新
+  document.querySelectorAll('.wp-thumb').forEach(t=>t.classList.toggle('active', t.dataset.wp===config.wallpaperId));
+  const noneBtn=document.getElementById('wpNoneBtn');
+  if(noneBtn) noneBtn.classList.toggle('active',!config.wallpaper);
+  // スライダー同期
+  const sl=document.getElementById('wpOpacitySlider');
+  const vl=document.getElementById('wpOpacityVal');
+  if(sl) sl.value=config.wallpaperOpacity;
+  if(vl) vl.textContent=config.wallpaperOpacity+'%';
+}
+function setWallpaper(type, src, id){
+  if(!type){ config.wallpaper=null; config.wallpaperId=null; }
+  else { config.wallpaper=src; config.wallpaperId=id||null; }
+  saveToStorage(); _applyWallpaper();
+}
+function setWpOpacity(val){
+  config.wallpaperOpacity=+val;
+  document.getElementById('wpOpacityVal').textContent=val+'%';
+  saveToStorage(); _applyWallpaper();
+}
+function loadWpLocalFile(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ setWallpaper('local', ev.target.result, 'custom_local'); };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+function loadWpUrl(){
+  const url=document.getElementById('wpUrlInput').value.trim();
+  if(!url) return;
+  setWallpaper('url', url, 'custom_url');
+  document.getElementById('wpUrlInput').value='';
+}
+function wpSwitchTab(tab){
+  const isLocal=tab==='local';
+  document.getElementById('wpLocalArea').style.display=isLocal?'block':'none';
+  document.getElementById('wpUrlArea').style.display=isLocal?'none':'block';
+  const tl=document.getElementById('wpTabLocal'), tu=document.getElementById('wpTabUrl');
+  if(tl&&tu){
+    tl.style.background=isLocal?'var(--accent)':'transparent';
+    tl.style.color=isLocal?'#000':'var(--text-dim)';
+    tl.style.borderColor=isLocal?'var(--accent)':'var(--border)';
+    tu.style.background=isLocal?'transparent':'var(--accent)';
+    tu.style.color=isLocal?'var(--text-dim)':'#000';
+    tu.style.borderColor=isLocal?'var(--border)':'var(--accent)';
+  }
+}
+function initWallpaper(){ _applyWallpaper(); }
+
+// ════════════════════════════════════════════════════════════════
 // FLOAT WINDOWS
 // ════════════════════════════════════════════════════════════════
 function toggleFloatWin(wid,bid){
@@ -1715,6 +1849,7 @@ note.value=LS.get('roku_note')||'';
 note.oninput=()=>LS.set('roku_note',note.value);
 renderTodos();
 initTheme();
+initWallpaper();
 initUI();
 </script>
 </body>
