@@ -84,7 +84,7 @@ body{background-color:var(--bg);color:var(--text-main);font-family:'Share Tech M
   .clock-card{order:1;width:100%}.timer-panel-wrap{order:2;width:100%}
   .search-panel{order:3;width:100%}.notes-panel{order:4;width:100%;flex:none!important;height:auto!important;min-height:160px}
   .todo-panel{order:5;width:100%;flex:none!important;height:auto!important;min-height:200px}
-  .yt-player-panel{order:6;width:100%;box-shadow:none;}.video-controls-panel{order:7;width:100%}
+  .yt-player-panel{order:6;width:100%;box-shadow:none;overflow:hidden;}.video-controls-panel{order:7;width:100%}
   .ambient-panel-wrap{order:8;width:100%}
   .notes-panel textarea{min-height:120px;height:120px}
   .todo-panel .todo-list{max-height:300px}
@@ -229,7 +229,7 @@ input:checked+.slider-round:before{transform:translateX(18px);background-color:#
 .video-container{width:100%;aspect-ratio:16/9;border-radius:24px;overflow:hidden;background:#000;border:1px solid var(--border);position:relative;flex-shrink:0}
 .video-player-frame{position:absolute;top:0;left:0;width:100%;height:100%}
 .video-player-frame iframe{width:100%;height:100%;border:none;outline:none}
-.left-side{width:355px;height:795px}
+.left-side{width:355px;height:795px;isolation:isolate}
 .video-controls-panel{background:var(--panel);border:1px solid var(--border);border-radius:32px;padding:20px;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 .url-group{display:flex;gap:8px;width:100%;margin-bottom:5px}
 .video-list-container{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
@@ -1086,6 +1086,16 @@ function playYouTube(vidId){
   }
   if(player){
     try {
+      // 切り替え時の一瞬の白/黒フラッシュを防ぐためカバーを被せる
+      const wrapper=document.getElementById('ytPlayerWrapper');
+      if(wrapper){
+        let cover=document.getElementById('ytLoadCover');
+        if(!cover){ cover=document.createElement('div'); cover.id='ytLoadCover';
+          cover.style.cssText='position:absolute;inset:0;background:#000;z-index:5;pointer-events:none;transition:opacity .3s;';
+          wrapper.appendChild(cover); }
+        cover.style.opacity='1';
+        setTimeout(()=>{ cover.style.opacity='0'; }, 600);
+      }
       if(isPl) player.loadPlaylist({ listType:'playlist', list:entry.listId });
       else if(/^[A-Za-z0-9_-]{11}$/.test(vidId)) player.loadVideoById(vidId);
     } catch(e){ console.warn('playYouTube:',e); }
