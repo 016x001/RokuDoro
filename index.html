@@ -84,7 +84,7 @@ body{background-color:var(--bg);color:var(--text-main);font-family:'Share Tech M
   .clock-card{order:1;width:100%}.timer-panel-wrap{order:2;width:100%}
   .search-panel{order:3;width:100%}.notes-panel{order:4;width:100%;flex:none!important;height:auto!important;min-height:160px}
   .todo-panel{order:5;width:100%;flex:none!important;height:auto!important;min-height:200px}
-  .yt-player-panel{order:6;width:100%}.video-controls-panel{order:7;width:100%}
+  .yt-player-panel{order:6;width:100%;box-shadow:none;}.video-controls-panel{order:7;width:100%}
   .ambient-panel-wrap{order:8;width:100%}
   .notes-panel textarea{min-height:120px;height:120px}
   .todo-panel .todo-list{max-height:300px}
@@ -341,9 +341,9 @@ body.has-wallpaper .float-win{
       <div id="clockDate" class="clock-date pixel-font"></div>
       <div id="clockTime" class="clock-time pixel-font"></div>
     </div>
-    <div class="panel yt-player-panel" style="padding:0;border-radius:24px;aspect-ratio:16/9;">
-      <div class="video-container">
-        <div id="ytPlayerWrapper" class="video-player-frame"><div id="player"></div></div>
+    <div class="panel yt-player-panel" style="padding:0;overflow:hidden;border-radius:24px;aspect-ratio:16/9;background:#000;">
+      <div class="video-container" style="border:none;border-radius:0;">
+        <div id="ytPlayerWrapper" class="video-player-frame"><div id="player" style="width:100%;height:100%;background:#000;"></div></div>
       </div>
     </div>
     <div class="video-controls-panel">
@@ -994,7 +994,7 @@ function onYouTubeIframeAPIReady(){
                  : (playlist.find(v => v.type==='video' && /^[A-Za-z0-9_-]{11}$/.test(v.id))?.id || 'jfKfPfyJRdk');
   player = new YT.Player('player', {
     videoId: initId,
-    playerVars: { autoplay:0, playsinline:1, modestbranding:1 },
+    playerVars: { autoplay:0, playsinline:1, modestbranding:1, rel:0, iv_load_policy:3, origin:location.origin },
     events: {
       onReady(e){
         e.target.setVolume(config.ytVol);
