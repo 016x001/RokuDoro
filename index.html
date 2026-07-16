@@ -63,9 +63,6 @@
 [data-theme^="light"] .search-site-item{background:var(--bg);border-color:var(--border)}
 [data-theme^="light"] .mode-toggle-btn{background:var(--bg)}
 [data-theme^="light"] .shortcut-overlay{background:rgba(0,0,0,.5)}
-[data-theme^="light"] .ytpl-btn{background:var(--bg);border-color:var(--border);color:var(--text-dim)}
-[data-theme^="light"] .ytpl-btn:hover:not(:disabled){background:var(--border);color:var(--text-main)}
-[data-theme^="light"] .add-mini-btn{background:var(--accent);color:#fff}
 [data-theme^="light"] .search-add-inputs input{background:var(--bg);border-color:var(--border);color:var(--text-main)}
 
 /* ── ベース ── */
@@ -106,18 +103,19 @@ body{background-color:var(--bg);color:var(--text-main);font-family:'Share Tech M
 .btn-icon svg{width:16px;height:16px}
 .btn-icon.main{background:var(--accent);color:#000;border:none;height:40px}
 .btn-icon:disabled{opacity:.2;cursor:not-allowed}
-.btn-icon:hover{background:#222}.btn-icon.main:hover{background:#eee}
+.btn-icon:hover{background:var(--border);border-color:var(--border)}.btn-icon.main:hover{background:var(--accent);opacity:.85}
 .btn-phase{background:#111;border:1px solid var(--border);color:#bbb;border-radius:10px;padding:5px 11px;font-size:10px;cursor:pointer;text-transform:uppercase;font-weight:bold;transition:.2s;font-family:'Share Tech Mono',monospace}
 .btn-phase:hover{border-color:var(--accent);color:var(--text-main)}
 .btn-phase.active{background:var(--accent);color:#000;border-color:var(--accent)}
 .btn-phase:disabled{opacity:.25;cursor:not-allowed;pointer-events:none}
 .tool-btn{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:10px;padding:4px 10px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-weight:bold;transition:.2s;display:flex;align-items:center;gap:5px}
-.tool-btn:hover{color:var(--text-main);border-color:var(--text-dim)}.tool-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.tool-btn:hover{background:var(--border);color:var(--text-main);border-color:var(--border)}.tool-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 .panel-collapse-btn{background:transparent;border:none;color:var(--text-dim);cursor:pointer;padding:0;line-height:1;transition:.2s;display:flex;align-items:center}
 .panel-collapse-btn:hover{color:var(--text-main)}
 .panel-collapse-btn svg{transition:transform .3s}
 .collapsed .panel-collapse-btn svg{transform:rotate(180deg)}
-.add-mini-btn{background:#222;color:#fff;border:none;border-radius:10px;width:32px;height:32px;font-size:18px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+.add-mini-btn{background:var(--accent);color:var(--bg);border:1px solid var(--accent);border-radius:10px;width:32px;height:32px;font-size:18px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:none}
+.add-mini-btn:hover{opacity:.85}
 
 /* ── スクロールバー ── */
 .scrollable,.video-list-container,.todo-list,textarea{overflow-y:auto;scrollbar-width:thin;scrollbar-color:transparent transparent}
@@ -238,9 +236,10 @@ input:checked+.slider-round:before{transform:translateX(18px);background-color:#
 .item-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;font-weight:bold}
 
 /* ── YT Playlist ── */
-.ytpl-btn{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:9px;color:var(--text-dim);font-size:11px;font-family:'Share Tech Mono',monospace;font-weight:bold;padding:6px 10px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:5px}
-.ytpl-btn:hover:not(:disabled){background:#2a2a2a;color:var(--text-main)}
-.ytpl-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.ytpl-btn{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:10px;font-family:'Share Tech Mono',monospace;font-weight:bold;padding:4px 10px;cursor:pointer;transition:none;display:flex;align-items:center;gap:5px}
+.ytpl-btn:hover:not(:disabled){background:var(--border);border-color:var(--border);color:var(--text-main)}
+.ytpl-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent);transition:none}
+.ytpl-btn.active:hover{border-color:var(--accent)}
 .ytpl-btn:disabled{opacity:.2;cursor:not-allowed;pointer-events:none}
 
 /* ── アンビエント ── */
@@ -263,8 +262,8 @@ summary{cursor:pointer;font-size:13px;color:var(--text-main);padding:8px 0;outli
 .search-input-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .search-input{background:#000;border:1px solid var(--border);border-radius:10px;color:var(--text-main);padding:8px 12px;font-size:12px;outline:none;flex:1;min-width:0;height:32px;font-family:'Share Tech Mono',monospace}
 .search-input:focus{border-color:var(--accent)}
-.search-go-btn{background:var(--accent);color:var(--bg);border:none;border-radius:10px;width:32px;height:32px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
-.search-go-btn:hover{opacity:.8}
+.search-go-btn{background:var(--accent);color:var(--bg);border:1px solid var(--accent);border-radius:10px;width:32px;height:32px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:none}
+.search-go-btn:hover{opacity:.85}
 .search-engines-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .search-engine-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;border:1px solid var(--border);background:transparent;cursor:pointer;transition:.2s;flex-shrink:0;overflow:hidden}
 .search-engine-btn:hover{background:#1a1a1a}
@@ -337,12 +336,40 @@ body.has-wallpaper .float-win{
       <div id="clockDate" class="clock-date pixel-font"></div>
       <div id="clockTime" class="clock-time pixel-font"></div>
     </div>
-    <div class="panel yt-player-panel" style="padding:0;overflow:hidden;border-radius:24px;aspect-ratio:16/9;background:#000;">
+    <!-- YouTube プレイヤー -->
+    <div id="ytPlayerPanel" class="panel yt-player-panel" style="padding:0;overflow:hidden;border-radius:24px;aspect-ratio:16/9;background:#000;">
       <div class="video-container" style="border:none;border-radius:0;">
         <div id="ytPlayerWrapper" class="video-player-frame"><div id="player" style="width:100%;height:100%;background:#000;"></div></div>
       </div>
     </div>
+    <!-- ローカル音楽プレイヤー -->
+    <div id="localPlayerPanel" class="panel yt-player-panel" style="display:none;padding:20px 24px;overflow:hidden;border-radius:24px;flex-direction:column;justify-content:center;align-items:center;aspect-ratio:16/9;gap:10px;position:relative;">
+      <div id="lpAlbumArt" style="font-size:42px;line-height:1;">🎵</div>
+      <div id="lpTitle" style="font-size:13px;font-weight:bold;color:var(--text-main);text-align:center;letter-spacing:1px;font-family:'Share Tech Mono',monospace;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
+      <div style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:4px;width:100%;">
+        <button onclick="lpPrev()" class="btn-icon" style="width:60px;height:44px;flex-shrink:0;" title="Prev">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+        <button id="lpPlayBtn" onclick="lpTogglePlay()" class="btn-icon main" style="width:120px;height:44px;flex-shrink:0;" title="Play/Pause">
+          <svg id="lpPlayIcon"  viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="lpPauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button onclick="lpNext()" class="btn-icon" style="width:60px;height:44px;flex-shrink:0;" title="Next">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 5.5 4V8z"/><rect x="16" y="6" width="2" height="12"/></svg>
+        </button>
+      </div>
+      <div style="width:100%;display:flex;align-items:center;gap:8px;">
+        <span id="lpCurrent" style="font-size:10px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;width:32px;text-align:right;">0:00</span>
+        <input type="range" id="lpSeek" min="0" max="100" value="0" style="flex:1;" oninput="lpSeek(this.value)">
+        <span id="lpDuration" style="font-size:10px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;width:32px;">0:00</span>
+      </div>
+    </div>
     <div class="video-controls-panel">
+      <!-- Player Mode Switch -->
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-bottom:10px;">
+        <button id="btnModeYT"    onclick="switchPlayerMode('yt')"    class="tool-btn active" style="flex:1;justify-content:center;">▶ YouTube</button>
+        <button id="btnModeLocal" onclick="switchPlayerMode('local')" class="tool-btn"        style="flex:1;justify-content:center;">🎵 Music</button>
+      </div>
       <!-- Vol -->
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-bottom:6px;">
         <span class="label" style="margin:0;flex-shrink:0;">Vol</span>
@@ -380,6 +407,16 @@ body.has-wallpaper .float-win{
         <div class="video-list-container" id="ytPlInnerList">
           <div style="color:var(--text-dim);font-size:11px;padding:8px 0;">読み込み中...</div>
         </div>
+      </div>
+
+      <!-- VIEW LOCAL: Musicトラックリスト -->
+      <div id="localView" style="display:none;flex-direction:column;flex:1;min-height:0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-bottom:8px;">
+          <span class="label" style="margin:0;flex:1;">Music Library</span>
+          <button onclick="lpToggleShuffle()" id="lpShuffleBtn" class="ytpl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg> Shuffle</button>
+          <button onclick="lpToggleLoop()"    id="lpLoopBtn"    class="ytpl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Loop</button>
+        </div>
+        <div class="video-list-container" id="localTrackList"></div>
       </div>
     </div>
   </div>
@@ -671,7 +708,8 @@ body.has-wallpaper .float-win{
 <footer class="credit-footer">
   <div>※当サイトのイラスト全ては原作、企業さまとは一切関係ありません</div>
   <div>Design: @016x001 / ALARM SOUND: Springin' Sound Stock / AMBIENT SOUND: VSQ plus+ / System: Claude</div>
-  <div>WALLPAPER PHOTOS: <a href="https://unsplash.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Unsplash</a></div>
+  <div>WALLPAPER PHOTOS: <a href="https://unsplash.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Unsplash</a> / MUSIC: <a href="https://ryu110.com/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">RYU ITO</a></div>
+  <div><a href="https://xfolio.jp/portfolio/016x001/free/1515238" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">お問い合わせ</a></div>
 </footer>
 <audio id="alarmAudio" preload="auto"></audio>
 
@@ -943,6 +981,163 @@ function updateIcons(run){
     bf.disabled=d; bb.disabled=d; bl.disabled=d;
   }
   if(config.timerMode==='normal') document.querySelectorAll('#normalInputArea .btn-phase').forEach(b=>b.disabled=run);
+}
+
+// ════════════════════════════════════════════════════════════════
+// LOCAL MUSIC PLAYER
+// ════════════════════════════════════════════════════════════════
+const LOCAL_TRACKS = [
+  'Boy','Changing','Compass','Compromise',
+  'Cozy','Drop','End','Fake','Fine','Mind',
+  'Neutral','Reflection','Road Trip','Signal',
+  'Stay','Wednesday','Week','Wind'
+].map((name,i)=>({ id:'lt'+i, name, src:`music/${name}.opus` }));
+
+let lpState = {
+  currentIdx: 0,
+  playing: false,
+  shuffle: true,
+  loop: false,
+  shuffleOrder: [],
+  shufflePos: 0,
+};
+let _lpAudio = null;    // HTMLAudioElement（シーク・progress用）
+let _lpSeekTimer = null;
+
+function _lpShuffleOrder(){
+  const arr=[...Array(LOCAL_TRACKS.length).keys()];
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  lpState.shuffleOrder=arr; lpState.shufflePos=0;
+}
+
+function switchPlayerMode(mode){
+  const isYt = mode==='yt';
+  if(isYt){
+    // Music → YT: ローカル停止
+    if(_lpAudio){ _lpAudio.pause(); lpState.playing=false; }
+    _lpSetPlayIcon(false);
+    renderLocalTrackList();
+  } else {
+    // YT → Music: YouTube停止
+    try{ if(player&&typeof player.pauseVideo==='function') player.pauseVideo(); }catch(e){}
+  }
+  document.getElementById('ytPlayerPanel').style.display    = isYt ? '' : 'none';
+  document.getElementById('localPlayerPanel').style.display = isYt ? 'none' : 'flex';
+  document.getElementById('ytViewA').style.display   = isYt ? 'flex' : 'none';
+  document.getElementById('ytViewB').style.display   = 'none';
+  document.getElementById('localView').style.display = isYt ? 'none' : 'flex';
+  document.getElementById('btnModeYT').classList.toggle('active', isYt);
+  document.getElementById('btnModeLocal').classList.toggle('active', !isYt);
+  document.querySelector('.video-controls-panel .label').textContent = 'Vol';
+  if(!isYt){ renderLocalTrackList(); _lpSyncButtons(); if(!_lpAudio) lpLoad(lpState.currentIdx,true); }
+}
+
+function lpLoad(idx, autoplay){
+  lpState.currentIdx = idx;
+  const track = LOCAL_TRACKS[idx];
+  if(_lpAudio){ _lpAudio.pause(); _lpAudio.src=''; }
+  _lpAudio = new Audio(track.src);
+  _lpAudio.volume = (config.ytVol||50)/100;
+  _lpAudio.addEventListener('timeupdate', _lpOnProgress);
+  _lpAudio.addEventListener('ended', _lpOnEnded);
+  _lpAudio.addEventListener('loadedmetadata', ()=>{
+    document.getElementById('lpDuration').textContent = _lpFmt(_lpAudio.duration);
+  });
+  document.getElementById('lpTitle').textContent = track.name;
+  _lpSetPlayIcon(autoplay);
+  renderLocalTrackList();
+  if(autoplay){ lpState.playing=true; _lpAudio.play().catch(()=>{}); }
+}
+
+function _lpOnProgress(){
+  if(!_lpAudio||_lpAudio.duration===0) return;
+  const pct = (_lpAudio.currentTime/_lpAudio.duration)*100;
+  document.getElementById('lpSeek').value = pct;
+  document.getElementById('lpCurrent').textContent = _lpFmt(_lpAudio.currentTime);
+}
+
+function _lpOnEnded(){
+  if(lpState.loop){
+    lpLoadNext();
+  } else {
+    lpState.playing=false;
+    _lpSetPlayIcon(false);
+  }
+}
+
+function lpLoadNext(){
+  if(lpState.shuffle){
+    lpState.shufflePos++;
+    if(lpState.shufflePos>=lpState.shuffleOrder.length) _lpShuffleOrder();
+    lpLoad(lpState.shuffleOrder[lpState.shufflePos], true);
+  } else {
+    lpLoad((lpState.currentIdx+1)%LOCAL_TRACKS.length, true);
+  }
+}
+
+function lpNext(){ lpLoadNext(); }
+function lpPrev(){
+  if(_lpAudio && _lpAudio.currentTime>3){ _lpAudio.currentTime=0; return; }
+  if(lpState.shuffle){
+    lpState.shufflePos = Math.max(0, lpState.shufflePos-1);
+    lpLoad(lpState.shuffleOrder[lpState.shufflePos], lpState.playing);
+  } else {
+    lpLoad((lpState.currentIdx-1+LOCAL_TRACKS.length)%LOCAL_TRACKS.length, lpState.playing);
+  }
+}
+
+function lpTogglePlay(){
+  if(!_lpAudio){ lpLoad(lpState.currentIdx, true); return; }
+  if(lpState.playing){ _lpAudio.pause(); lpState.playing=false; _lpSetPlayIcon(false); }
+  else { _lpAudio.play().catch(()=>{}); lpState.playing=true; _lpSetPlayIcon(true); }
+}
+
+function lpSeek(val){
+  if(_lpAudio && _lpAudio.duration) _lpAudio.currentTime=(_lpAudio.duration*val/100);
+}
+
+function lpToggleShuffle(){
+  lpState.shuffle=!lpState.shuffle;
+  if(lpState.shuffle) _lpShuffleOrder();
+  _lpSyncButtons();
+}
+
+function lpToggleLoop(){
+  lpState.loop=!lpState.loop;
+  _lpSyncButtons();
+}
+
+function _lpSetPlayIcon(playing){
+  const pi=document.getElementById('lpPlayIcon'), pa=document.getElementById('lpPauseIcon');
+  if(pi) pi.style.display=playing?'none':'block';
+  if(pa) pa.style.display=playing?'block':'none';
+}
+
+function renderLocalTrackList(){
+  const cont = document.getElementById('localTrackList'); if(!cont) return;
+  cont.innerHTML='';
+  LOCAL_TRACKS.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='list-item'+(i===lpState.currentIdx?' active':'');
+    d.style.cssText='display:flex;align-items:center;gap:8px;';
+    d.innerHTML=`<span style="font-size:10px;color:var(--text-dim);width:18px;text-align:right;flex-shrink:0;">${i+1}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</span>
+      ${i===lpState.currentIdx&&lpState.playing?'<span style="color:var(--accent);font-size:10px;">▶</span>':''}`;
+    d.onclick=()=>lpLoad(i,true);
+    cont.appendChild(d);
+  });
+}
+
+// 初期化（シャッフル順を生成、開始曲もランダムに）
+_lpShuffleOrder();
+lpState.currentIdx = lpState.shuffleOrder[0];
+
+// ボタンのactive状態をlpStateと同期する
+function _lpSyncButtons(){
+  const sb=document.getElementById('lpShuffleBtn');
+  const lb=document.getElementById('lpLoopBtn');
+  if(sb) sb.classList.toggle('active', lpState.shuffle);
+  if(lb) lb.classList.toggle('active', lpState.loop);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1927,7 +2122,12 @@ function initUI(){
     document.getElementById('alarmVolVal').innerText=Math.round(config.alarmVol*100)+'%';
     saveToStorage();
   }, {passive:false});
-  document.getElementById('ytVolSlider').oninput=e=>{ config.ytVol=+e.target.value; if(player&&typeof player.setVolume==='function')player.setVolume(+e.target.value); saveToStorage(); };
+  document.getElementById('ytVolSlider').oninput=e=>{
+    config.ytVol=+e.target.value;
+    if(player&&typeof player.setVolume==='function') player.setVolume(+e.target.value);
+    if(_lpAudio) _lpAudio.volume=+e.target.value/100;
+    saveToStorage();
+  };
   document.getElementById('ytVolSlider').addEventListener('wheel', e=>{
     e.preventDefault();
     const sl=document.getElementById('ytVolSlider');
