@@ -993,6 +993,10 @@ const LOCAL_TRACKS = [
   'Stay','Wednesday','Week','Wind'
 ].map((name,i)=>({ id:'lt'+i, name, src:`music/${name}.opus` }));
 
+// Road Tripだけ実ファイル名が異なるため補正
+const _rtTrack = LOCAL_TRACKS.find(t=>t.name==='Road Trip');
+if(_rtTrack) _rtTrack.src = 'music/Road  Trip.opusd';
+
 let lpState = {
   currentIdx: 0,
   playing: false,
