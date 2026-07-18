@@ -986,15 +986,14 @@ function updateIcons(run){
 // LOCAL MUSIC PLAYER
 // ════════════════════════════════════════════════════════════════
 const LOCAL_TRACKS = [
-  'Boy','Changing','Compass','Compromise',
-  'Cozy','Drop','End','Fake','Fine','Mind',
-  'Neutral','Reflection','Road Trip','Signal',
-  'Stay','Wednesday','Week','Wind'
-].map((name,i)=>({ id:'lt'+i, name, src:`music/${name}.opus` }));
-
-// Road Tripだけ実ファイル名が異なるため補正
-const _rtTrack = LOCAL_TRACKS.find(t=>t.name==='Road Trip');
-if(_rtTrack) _rtTrack.src = 'music/Road  Trip.opusd';
+  {name:'Boy'},       {name:'Changing'},  {name:'Compass'},
+  {name:'Compromise'},{name:'Cozy'},      {name:'Drop'},
+  {name:'End'},       {name:'Fake'},      {name:'Fine'},
+  {name:'Mind'},      {name:'Neutral'},   {name:'Reflection'},
+  {name:'Road Trip',  src:'music/Road  Trip.opus'},
+  {name:'Signal'},    {name:'Stay'},      {name:'Wednesday'},
+  {name:'Week'},      {name:'Wind'}
+].map((t,i)=>({ id:'lt'+i, name:t.name, src:t.src||`music/${t.name}.opus` }));
 
 let lpState = {
   currentIdx: 0,
