@@ -414,7 +414,6 @@ body.has-wallpaper .float-win{
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-bottom:8px;">
           <span class="label" style="margin:0;flex:1;">Music Library</span>
           <button onclick="lpToggleShuffle()" id="lpShuffleBtn" class="ytpl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg> Shuffle</button>
-          <button onclick="lpToggleLoop()"    id="lpLoopBtn"    class="ytpl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Loop</button>
         </div>
         <div class="video-list-container" id="localTrackList"></div>
       </div>
@@ -1001,7 +1000,6 @@ let lpState = {
   currentIdx: 0,
   playing: false,
   shuffle: true,
-  loop: false,
   shuffleOrder: [],
   shufflePos: 0,
 };
@@ -1061,12 +1059,7 @@ function _lpOnProgress(){
 }
 
 function _lpOnEnded(){
-  if(lpState.loop){
-    lpLoadNext();
-  } else {
-    lpState.playing=false;
-    _lpSetPlayIcon(false);
-  }
+  lpLoadNext();
 }
 
 function lpLoadNext(){
@@ -1106,10 +1099,6 @@ function lpToggleShuffle(){
   _lpSyncButtons();
 }
 
-function lpToggleLoop(){
-  lpState.loop=!lpState.loop;
-  _lpSyncButtons();
-}
 
 function _lpSetPlayIcon(playing){
   const pi=document.getElementById('lpPlayIcon'), pa=document.getElementById('lpPauseIcon');
@@ -1139,9 +1128,7 @@ lpState.currentIdx = lpState.shuffleOrder[0];
 // ボタンのactive状態をlpStateと同期する
 function _lpSyncButtons(){
   const sb=document.getElementById('lpShuffleBtn');
-  const lb=document.getElementById('lpLoopBtn');
   if(sb) sb.classList.toggle('active', lpState.shuffle);
-  if(lb) lb.classList.toggle('active', lpState.loop);
 }
 
 // ════════════════════════════════════════════════════════════════
