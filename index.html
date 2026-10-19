@@ -3517,7 +3517,6 @@ const WIDGET_DEFS = {
   notes:       {label:'Notes',            icon:'📝', singleton:false},
   todo:        {label:'ToDo List',        icon:'✅', singleton:false},
 };
-const SINGLETON_TYPES = Object.keys(WIDGET_DEFS).filter(k=>WIDGET_DEFS[k].singleton);
 
 const PAGES_KEY='roku_pages', CURRENT_PAGE_KEY='roku_current_page', STARTUP_KEY='roku_startup_pref';
 let pages = JSON.parse(LS.get(PAGES_KEY)||'null');
@@ -3554,14 +3553,9 @@ function migrateLegacyDataIfNeeded(){
   if(existing) return; // 既に移行済み(または既にウィジェットを持っている)
 
   const widgets=[];
-  // シングルトン系(clock/player/timer/ambient/search)は初回はすべてHOMEに割り当てる
-  SINGLETON_TYPES.forEach(type=>widgets.push({instanceId:'singleton_'+type, type}));
-
-  // 旧Notesデータ移行
-  const legacyNote=LS.get('roku_note');
-  const noteInstanceId=genWidgetId();
-  widgets.push({instanceId:noteInstanceId, type:'notes'});
-  if(legacyNote!==null) LS.set('roku_pw_note_'+noteInstanceId, legacyNote);
+  // 初めて開いた時は情報量を抑えるため、Music / Pomodoro / ToDo / Notes の4つだけを置く
+  // (他のカードは右上の「＋」から追加できる)
+  ['player','pomodoro'].forEach(type=>widgets.push({instanceId:'singleton_'+type, type}));
 
   // 旧ToDoデータ移行
   const legacyTodos=LS.get('roku_todos');
@@ -3569,7 +3563,16 @@ function migrateLegacyDataIfNeeded(){
   widgets.push({instanceId:todoInstanceId, type:'todo'});
   if(legacyTodos) LS.set('roku_pw_todos_'+todoInstanceId, legacyTodos);
 
+  // 旧Notesデータ移行
+  const legacyNote=LS.get('roku_note');
+  const noteInstanceId=genWidgetId();
+  widgets.push({instanceId:noteInstanceId, type:'notes'});
+  if(legacyNote!==null) LS.set('roku_pw_note_'+noteInstanceId, legacyNote);
+
   savePageWidgets(home.id, widgets);
+
+  // 4枚が6列の中で左に寄って見えないよう、初回だけ最大カラム数を4にしておく(設定の「Max Columns」でいつでも変更可)
+  if(LS.get(MAX_COLUMNS_KEY)===null){ userMaxColumns=4; LS.set(MAX_COLUMNS_KEY,'4'); }
 }
 
 function purgeRemovedWidgetTypes(){
