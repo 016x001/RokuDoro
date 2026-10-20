@@ -231,7 +231,7 @@ input:checked+.slider-round:before{transform:translateX(12px);background-color:#
 a.rss-article-title:hover{text-decoration:underline}
 .rss-article-date{font-size:9px;color:var(--text-dim)}
 .rss-status{text-align:center;color:var(--text-dim);font-size:11px;padding:14px 0}
-.rss-error{font-size:10px;color:var(--text-main);line-height:1.6}
+.rss-error{font-size:10px;color:var(--text-main);line-height:1.6;white-space:pre-wrap;word-break:break-all}
 
 /* ── ノート(Misskey風) ── */
 .note-card-item{display:flex;flex-direction:column;gap:4px;padding:9px 10px;background:#111;border-radius:10px;border:1px solid var(--border)}
@@ -1046,7 +1046,7 @@ body.has-wallpaper #widgetRoot_player .dock-widget-titlebar{
       <div class="credits-row"><span class="credits-key">Weather</span><span><a href="https://www.jma.go.jp/" target="_blank" rel="noopener">気象庁</a>(天気予報データ)</span></div>
       <div class="credits-row"><span class="credits-key">Postal Code</span><span><a href="https://zipcloud.ibsnet.co.jp/" target="_blank" rel="noopener">zipcloud</a>(郵便番号検索)</span></div>
       <div class="credits-row"><span class="credits-key">Site Title</span><span><a href="https://jina.ai/reader/" target="_blank" rel="noopener">Jina Reader</a>(サイト名の取得)</span></div>
-      <div class="credits-row"><span class="credits-key">RSS Relay</span><span><a href="https://allorigins.win/" target="_blank" rel="noopener">allorigins</a> / <a href="https://corsproxy.io/" target="_blank" rel="noopener">corsproxy.io</a>(RSSの取得中継)</span></div>
+      <div class="credits-row"><span class="credits-key">RSS Relay</span><span><a href="https://rss2json.com/" target="_blank" rel="noopener">rss2json</a> / <a href="https://allorigins.win/" target="_blank" rel="noopener">allorigins</a> / <a href="https://codetabs.com/" target="_blank" rel="noopener">codetabs</a> / <a href="https://cors.eu.org/" target="_blank" rel="noopener">cors.eu.org</a>(RSSの取得中継)</span></div>
       <div class="search-hint" style="margin-top:6px;color:var(--text-main);">※ 天気の郵便番号検索・クイックアクセスのサイト名取得・RSSの取得を使うと、入力した郵便番号・URLが上記サービスへ送信されます(RSSは、直接読み込めないフィードのみ中継を使います)</div>
     </div>
     <div class="credits-section">
@@ -2699,13 +2699,17 @@ async function lookupWeatherZip(){
 
 // ════════════════════════════════════════════════════════════════
 // RSS
-// ブラウザから直接読めるフィードはそのまま取得し、CORSで弾かれるものだけ公開の中継(allorigins / corsproxy.io)経由で取得する。
+// ブラウザから直接読めるフィードはそのまま取得し、CORSで弾かれるものだけ公開の中継(rss2json / allorigins など)経由で取得する。
 // RSS 2.0 / RSS 1.0(RDF) / Atom に対応。記事リンクはhttp(s)のみ許可し、表示はtextContentで行う。
 // ════════════════════════════════════════════════════════════════
 const RSS_TTL_MS=15*60*1000;
-const RSS_PROXIES=[
-  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-  u=>'https://corsproxy.io/?'+encodeURIComponent(u),
+// 直接読めないフィード用の中継(いずれも無料の公開サービスなので、止まったり制限されたりすることがある)。
+// corsproxy.io は無料枠がlocalhost限定になり、公開したサイトからは403で弾かれるため使わない。
+const RSS_RELAYS=[
+  {name:'rss2json',    url:u=>'https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(u), json:true},
+  {name:'allorigins',  url:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)},
+  {name:'codetabs',    url:u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)},
+  {name:'cors.eu.org', url:u=>'https://cors.eu.org/'+u},
 ];
 function getRssFeeds(){ return JSON.parse(LS.get('roku_rss_feeds')||'[]'); }
 function saveRssFeeds(list){ LS.set('roku_rss_feeds', JSON.stringify(list)); }
@@ -2765,38 +2769,73 @@ function parseFeedXml(text, feedUrl){
   });
   return {name, items};
 }
-async function rssFetchText(url, ms){
-  const ctrl=new AbortController();
-  const timer=setTimeout(()=>ctrl.abort(), ms);
+// rss2jsonが返すJSONを、XML解析の結果と同じ形に変換する
+function parseRss2Json(text, feedUrl){
+  let j;
+  try{ j=JSON.parse(text); }catch(e){ return null; }
+  if(!j || j.status!=='ok' || !Array.isArray(j.items) || !j.items.length) return null;
+  const items=j.items.slice(0,20).map(it=>{
+    let ds=String(it.pubDate||'');
+    if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(ds)) ds=ds.replace(' ','T')+'Z'; // UTCの「YYYY-MM-DD HH:MM:SS」で返ってくる
+    const d=Date.parse(ds);
+    return { t:rssCleanText(it.title)||'(無題)', l:rssSafeUrl(it.link||'', feedUrl), d:isNaN(d)?0:d };
+  });
+  return {name:rssCleanText((j.feed&&j.feed.title)||'').slice(0,30), items};
+}
+async function rssFetchText(url, ms, ctrl){
+  let timedOut=false;
+  const timer=setTimeout(()=>{ timedOut=true; ctrl.abort(); }, ms);
   try{
     const res=await fetch(url,{signal:ctrl.signal});
     if(!res.ok) throw new Error('HTTP '+res.status);
     return await res.text();
-  } finally { clearTimeout(timer); }
+  }catch(e){
+    if(timedOut) throw new Error('タイムアウト');
+    if(e && e.name==='TypeError') throw new Error('通信失敗(CORS・接続)');
+    throw e;
+  }finally{ clearTimeout(timer); }
+}
+// 1つの経路を試す。失敗しても例外は投げず、理由を note に入れて返す
+async function rssTryRoute(name, url, isJson, feedUrl, ms, ctrl){
+  try{
+    const text=await rssFetchText(url, ms, ctrl);
+    const parsed=isJson ? parseRss2Json(text, feedUrl) : parseFeedXml(text, feedUrl);
+    return parsed ? {parsed} : {note:name+': フィードとして読み取れない'};
+  }catch(e){
+    return {note:name+': '+((e&&e.message)||'失敗')};
+  }
 }
 async function rssFetchFeed(feedUrl){
-  const attempts=[feedUrl].concat(RSS_PROXIES.map(f=>f(feedUrl)));
-  for(const u of attempts){
-    try{
-      const parsed=parseFeedXml(await rssFetchText(u,8000), feedUrl);
-      if(parsed) return parsed;
-    }catch(e){ /* 次の経路へ */ }
-  }
-  return null;
+  const notes=[];
+  // 1) まず直接取得する。成功すれば中継サービスにURLを送らずに済む
+  const direct=await rssTryRoute('直接', feedUrl, false, feedUrl, 6000, new AbortController());
+  if(direct.parsed) return {parsed:direct.parsed, notes};
+  notes.push(direct.note);
+  // 2) 直接読めなかった時だけ、中継サービスへ同時に問い合わせ、最初に成功したものを使う(残りは中止)
+  const ctrls=RSS_RELAYS.map(()=>new AbortController());
+  return await new Promise(resolve=>{
+    let pending=RSS_RELAYS.length;
+    RSS_RELAYS.forEach((r,i)=>{
+      rssTryRoute(r.name, r.url(feedUrl), !!r.json, feedUrl, 10000, ctrls[i]).then(res=>{
+        if(res.parsed){ ctrls.forEach((c,j)=>{ if(j!==i) c.abort(); }); resolve({parsed:res.parsed, notes}); }
+        else{ notes.push(res.note); if(--pending===0) resolve({parsed:null, notes}); }
+      });
+    });
+  });
 }
 async function rssLoadFeed(feed, force){
   const key=rssCacheKey(feed.id);
   const cached=JSON.parse(LS.get(key)||'null');
   if(!force && cached && Date.now()-cached.ts<RSS_TTL_MS) return {feed, name:cached.name, items:cached.items, error:false};
-  const parsed=await rssFetchFeed(feed.url);
-  if(parsed){
-    LS.set(key, JSON.stringify({ts:Date.now(), name:parsed.name, items:parsed.items}));
-    return {feed, name:parsed.name, items:parsed.items, error:false};
+  const res=await rssFetchFeed(feed.url);
+  if(res.parsed){
+    LS.set(key, JSON.stringify({ts:Date.now(), name:res.parsed.name, items:res.parsed.items}));
+    return {feed, name:res.parsed.name, items:res.parsed.items, error:false};
   }
-  if(cached) return {feed, name:cached.name, items:cached.items, error:true, stale:true};
-  return {feed, name:'', items:[], error:true};
+  if(cached) return {feed, name:cached.name, items:cached.items, error:true, stale:true, notes:res.notes};
+  return {feed, name:'', items:[], error:true, notes:res.notes};
 }
-function rssSetStatus(text){
+function rssSetStatus(text, detail){
   const area=document.getElementById('rssArticles');
   if(!area) return;
   area.innerHTML='';
@@ -2804,6 +2843,12 @@ function rssSetStatus(text){
   d.className='rss-status';
   d.textContent=text;
   area.appendChild(d);
+  if(detail){
+    const e=document.createElement('div');
+    e.className='rss-error';
+    e.textContent=detail;
+    area.appendChild(e);
+  }
 }
 let _rssBusy=false, _rssQueued=false;
 async function refreshRss(force){
@@ -2829,6 +2874,9 @@ async function refreshRss(force){
     if(_rssQueued){ _rssQueued=false; refreshRss(false); }
   }
 }
+function rssFailureDetail(r){
+  return (r.name||rssHost(r.feed.url))+(r.stale?'(前回分を表示中)':'')+' ― '+((r.notes||[]).join(' / ')||'原因不明');
+}
 function renderRssArticles(results){
   const area=document.getElementById('rssArticles');
   if(!area) return;
@@ -2841,7 +2889,8 @@ function renderRssArticles(results){
   all.sort((a,b)=>b.d-a.d);
   const failed=results.filter(r=>r.error);
   if(!all.length){
-    rssSetStatus(failed.length ? '記事を取得できませんでした(URLがRSS/Atomフィードか、通信環境をご確認ください)' : '記事がありません');
+    rssSetStatus(failed.length ? '記事を取得できませんでした(URLがRSS/Atomフィードか、通信環境をご確認ください)' : '記事がありません',
+      failed.map(rssFailureDetail).join('\n'));
     return;
   }
   all.slice(0,40).forEach(it=>{
@@ -2861,7 +2910,7 @@ function renderRssArticles(results){
   if(failed.length){
     const e=document.createElement('div');
     e.className='rss-error';
-    e.textContent='⚠ 取得できなかったフィード: '+failed.map(r=>(r.name||rssHost(r.feed.url))+(r.stale?'(前回分を表示中)':'')).join(', ');
+    e.textContent='⚠ 取得できなかったフィード\n'+failed.map(rssFailureDetail).join('\n');
     area.appendChild(e);
   }
 }
@@ -3835,7 +3884,7 @@ function parkSingletonWidget(type){
   if(!def) return;
   const el=document.getElementById(def.domId);
   const pool=document.getElementById('singletonPool');
-  if(el && pool && el.parentElement!==pool) pool.appendChild(el);
+  if(el && pool && el.parentElement!==pool) moveNode(pool, el, null);
 }
 
 // ── ウィジェット追加ピッカー ──
@@ -3979,12 +4028,25 @@ function attachDragReorder(el, instanceId, handle){
   h.addEventListener('touchstart', arm, {passive:true});
   document.addEventListener('mouseup', disarmIfIdle);
   document.addEventListener('touchend', disarmIfIdle);
+  // カードの中にドラッグできる要素(Musicのプレイリスト項目など)があると、そのdragstart/dragendもカードへ伝わってくる。
+  // 「カード自体をつかんだ時」だけ反応するようe.targetを確認する。
+  // (これを確認しないと、プレイリストを並べ替えただけでカードが半透明のまま戻らなくなったり、
+  //  項目を別カードの上にドロップした時にMusicカードごと動いてしまう)
+  let cardDragging=false;
   el.addEventListener('dragstart', e=>{
+    if(e.target!==el) return;
+    cardDragging=true;
     e.dataTransfer.setData('text/plain', instanceId);
     e.dataTransfer.effectAllowed='move';
-    setTimeout(()=>el.classList.add('dragging'),0);
+    // 見た目の変更は次のタスクで行う(同時に行うとドラッグ画像まで半透明になるため)。ただし直後にdragendが来ていたら付けない
+    setTimeout(()=>{ if(cardDragging) el.classList.add('dragging'); },0);
   });
-  el.addEventListener('dragend', ()=>{ el.draggable=false; el.classList.remove('dragging'); });
+  el.addEventListener('dragend', e=>{
+    if(e.target!==el) return;
+    cardDragging=false;
+    el.draggable=false;
+    el.classList.remove('dragging');
+  });
   el.addEventListener('dragover', e=>{ e.preventDefault(); });
   el.addEventListener('drop', e=>{
     e.preventDefault();
@@ -4030,14 +4092,36 @@ function reorderPageWidgets(pageId, draggedInstanceId, targetInstanceId, targetE
   renderPageWidgets(getCurrentPage());
 }
 
+// DOMノードを移動する。iframe(YouTubeなど)は一度DOMから取り外して戻すと読み込み直しになり再生が止まるが、
+// moveBefore(Chrome/Edgeなど)なら再生状態を保ったまま移動できるので、使えるならそちらを使う。
+// 非対応のブラウザや、まだDOMに入っていない新規要素は通常の insertBefore で移動する。
+function moveNode(parent, node, ref){
+  if(typeof parent.moveBefore==='function' && node.isConnected && parent.isConnected){
+    try{ parent.moveBefore(node, ref||null); return; }catch(e){ /* 通常の移動へ */ }
+  }
+  parent.insertBefore(node, ref||null);
+}
+
+// カードの再配置。
+// 以前は毎回「全シングルトンをプールへ退避→グリッドを空にして作り直し→戻す」としていたため、
+// 他のカードを動かしただけでMusicカードのiframeも取り外され、YouTubeの再生が止まっていた。
+// 今は、位置が変わらないカードには触れず、必要なものだけを動かす。
 function renderPageWidgets(page){
   const grid=document.getElementById('pageWidgetsGrid');
   const pool=document.getElementById('singletonPool');
   const list=getPageWidgets(page.id);
-  // 既にグリッド内にあるシングルトンウィジェットの実DOMノードは、消える前に一旦プールへ退避
-  // (innerHTML='' でそのまま消すとdocument内から切り離され、getElementByIdで再取得できなくなるため)
-  grid.querySelectorAll('.dock-widget').forEach(el=>{ pool.appendChild(el); });
-  grid.innerHTML='';
+
+  // このページに表示するシングルトンのDOMノード
+  const keep=new Set();
+  list.forEach(w=>{
+    const def=WIDGET_DEFS[w.type];
+    if(def && def.singleton){ const n=document.getElementById(def.domId); if(n) keep.add(n); }
+  });
+  // このページに無いシングルトンはプールへ退避(innerHTML等で消えてgetElementByIdで探せなくなるのを防ぐ)
+  grid.querySelectorAll('.dock-widget').forEach(el=>{ if(!keep.has(el)) moveNode(pool, el, null); });
+  // Notes/ToDoは描画のたびに作り直すので、古い要素は取り除く
+  grid.querySelectorAll('.page-widget-card').forEach(el=>el.remove());
+
   if(!list.length){
     grid.innerHTML=`
       <div class="page-empty-state">
@@ -4053,15 +4137,25 @@ function renderPageWidgets(page){
   // デスクトップでは画面が許容する最大数を基準にすることで、ユーザーが列数を減らした分だけ中央に余白を残す
   const widthBasisCols = (window.innerWidth<=1000) ? laneCount : getViewportColumnCap();
   grid.style.setProperty('--max-cols', widthBasisCols);
-  const lanes=[];
-  for(let i=0;i<laneCount;i++){
-    const laneEl=document.createElement('div');
-    laneEl.className='widget-lane';
-    laneEl.dataset.laneIndex=String(i);
-    setupLaneDropZone(laneEl, i);
-    lanes.push(laneEl);
-    grid.appendChild(laneEl);
+
+  // レーンは数が同じならそのまま使い回す(中のカードを動かさないため)。変わった時・空の表示からの復帰時だけ作り直す
+  let lanes=Array.prototype.filter.call(grid.children, c=>c.classList.contains('widget-lane'));
+  if(!(lanes.length===laneCount && grid.children.length===laneCount)){
+    grid.querySelectorAll('.dock-widget').forEach(el=>moveNode(pool, el, null));
+    grid.innerHTML='';
+    lanes=[];
+    for(let i=0;i<laneCount;i++){
+      const laneEl=document.createElement('div');
+      laneEl.className='widget-lane';
+      laneEl.dataset.laneIndex=String(i);
+      setupLaneDropZone(laneEl, i);
+      lanes.push(laneEl);
+      grid.appendChild(laneEl);
+    }
   }
+
+  // 各レーンに置くカードを順番どおりに用意する
+  const desired=lanes.map(()=>[]);
   list.forEach((w,idx)=>{
     const def=WIDGET_DEFS[w.type];
     if(!def) return;
@@ -4074,7 +4168,19 @@ function renderPageWidgets(page){
     } else if(w.type==='todo'){
       el=buildTodoWidget(page.id,w);
     }
-    if(el) lanes[laneIdx].appendChild(el);
+    if(el && el.nodeType===1) desired[laneIdx].push(el);
+  });
+
+  // 既に正しい位置にあるカードには触れず、ずれているものだけを動かす。
+  // (別のレーンへ移る予定のカードは飛ばして数える。移動先のレーンの処理で動かされる)
+  lanes.forEach((lane,i)=>{
+    const want=desired[i], wantSet=new Set(want);
+    let ref=lane.firstElementChild;
+    want.forEach(n=>{
+      while(ref && !wantSet.has(ref)) ref=ref.nextElementSibling;
+      if(ref===n) ref=ref.nextElementSibling;
+      else moveNode(lane, n, ref);
+    });
   });
 }
 
