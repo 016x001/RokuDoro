@@ -219,19 +219,14 @@ input:checked+.slider-round:before{transform:translateX(12px);background-color:#
 .weather-updated{font-size:9px;color:var(--text-dim);text-align:right;margin-top:2px}
 .weather-error{text-align:center;padding:16px 0;color:var(--text-dim);font-size:11px;display:flex;flex-direction:column;gap:8px;align-items:center}
 
-/* ── RSS ── */
-.rss-feed-chip{display:inline-flex;align-items:center;gap:5px;background:#111;border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:10px;color:var(--text-main)}
-[data-theme^="light"] .rss-feed-chip{background:var(--bg)}
-.rss-feed-chip .name{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rss-feed-chip button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:11px;padding:0}
-.rss-feed-chip button:hover{color:var(--text-main)}
-.rss-article{display:flex;flex-direction:column;gap:2px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.rss-article:last-of-type{border-bottom:none}
-.rss-article-title{font-size:12px;color:var(--text-main);line-height:1.4;text-decoration:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-a.rss-article-title:hover{text-decoration:underline}
-.rss-article-date{font-size:9px;color:var(--text-dim)}
-.rss-status{text-align:center;color:var(--text-dim);font-size:11px;padding:14px 0}
-.rss-error{font-size:10px;color:var(--text-main);line-height:1.6;white-space:pre-wrap;word-break:break-all}
+/* ── カードの最小化(見出しだけ残して中身を隠す) ── */
+.widget-min-btn{background:transparent;border:none;color:var(--text-main);width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;border-radius:6px;flex-shrink:0;opacity:0;transition:opacity .15s,background-color .15s}
+.widget-min-btn svg{width:14px;height:14px}
+.widget-min-btn:hover{background:var(--border)}
+.page-widget-head:hover .widget-min-btn,.dock-widget-titlebar:hover .widget-min-btn,.minimized .widget-min-btn{opacity:1}
+@media(hover:none){ .widget-min-btn{opacity:1} } /* ホバーできないタッチ端末では常に表示 */
+.dock-widget.minimized > :not(.dock-widget-titlebar){display:none !important}
+.page-widget-card.minimized > :not(.page-widget-head){display:none !important}
 
 /* ── ノート(Misskey風) ── */
 .note-card-item{display:flex;flex-direction:column;gap:4px;padding:9px 10px;background:#111;border-radius:10px;border:1px solid var(--border)}
@@ -253,6 +248,9 @@ a.rss-article-title:hover{text-decoration:underline}
 [data-theme^="light"] .qa-item{background:var(--bg)}
 .qa-item:hover{border-color:var(--accent)}
 .qa-icon{width:22px;height:22px;color:var(--text-main)}
+.qa-icon-wrap{width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qa-icon-wrap.has-img{background:#fff;border-radius:8px;padding:3px;box-sizing:border-box} /* 暗い色のアイコンもダーク/ライト両方で見えるよう白いタイルに載せる */
+.qa-icon-wrap.has-img .qa-icon{width:100%;height:100%;object-fit:contain;border-radius:4px}
 .qa-name{font-size:10px;color:var(--text-main);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .qa-del-btn{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.5);border:none;border-radius:6px;color:#ccc;width:16px;height:16px;font-size:9px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center}
 .qa-item:hover .qa-del-btn{display:flex}
@@ -763,19 +761,6 @@ body.has-wallpaper #widgetRoot_player .dock-widget-titlebar{
       </div>
     </div>
 
-    <!-- RSS -->
-    <div class="panel" id="widgetRoot_rss" style="display:flex;flex-direction:column;gap:10px;padding:16px 18px 18px;">
-      <div style="display:flex;gap:6px;">
-        <input type="text" id="rssUrlInput" placeholder="RSSのURLを入力..." style="flex:1;font-size:10px;" onkeydown="if(event.key==='Enter')addRssFeed()">
-        <button class="add-mini-btn" onclick="addRssFeed()">+</button>
-        <button class="btn-icon" style="width:32px;height:32px;flex-shrink:0;" title="更新" onclick="refreshRss(true)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-        </button>
-      </div>
-      <div id="rssFeedList" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-      <div id="rssArticles" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"></div>
-    </div>
-
     <!-- ノート -->
     <div class="panel" id="widgetRoot_notecard" style="display:flex;flex-direction:column;gap:10px;padding:16px 18px 18px;">
       <div style="display:flex;gap:6px;">
@@ -1046,8 +1031,8 @@ body.has-wallpaper #widgetRoot_player .dock-widget-titlebar{
       <div class="credits-row"><span class="credits-key">Weather</span><span><a href="https://www.jma.go.jp/" target="_blank" rel="noopener">気象庁</a>(天気予報データ)</span></div>
       <div class="credits-row"><span class="credits-key">Postal Code</span><span><a href="https://zipcloud.ibsnet.co.jp/" target="_blank" rel="noopener">zipcloud</a>(郵便番号検索)</span></div>
       <div class="credits-row"><span class="credits-key">Site Title</span><span><a href="https://jina.ai/reader/" target="_blank" rel="noopener">Jina Reader</a>(サイト名の取得)</span></div>
-      <div class="credits-row"><span class="credits-key">RSS Relay</span><span><a href="https://rss2json.com/" target="_blank" rel="noopener">rss2json</a> / <a href="https://allorigins.win/" target="_blank" rel="noopener">allorigins</a> / <a href="https://codetabs.com/" target="_blank" rel="noopener">codetabs</a> / <a href="https://cors.eu.org/" target="_blank" rel="noopener">cors.eu.org</a>(RSSの取得中継)</span></div>
-      <div class="search-hint" style="margin-top:6px;color:var(--text-main);">※ 天気の郵便番号検索・クイックアクセスのサイト名取得・RSSの取得を使うと、入力した郵便番号・URLが上記サービスへ送信されます(RSSは、直接読み込めないフィードのみ中継を使います)</div>
+      <div class="credits-row"><span class="credits-key">Site Icon</span><span><a href="https://www.google.com/" target="_blank" rel="noopener">Google</a> / <a href="https://duckduckgo.com/" target="_blank" rel="noopener">DuckDuckGo</a>(サイトアイコンの取得)</span></div>
+      <div class="search-hint" style="margin-top:6px;color:var(--text-main);">※ 天気の郵便番号検索・クイックアクセスのサイト名/アイコン取得を使うと、入力した郵便番号・URL(アイコンはドメイン)が上記サービスへ送信されます</div>
     </div>
     <div class="credits-section">
       <div class="credits-note">※当サイトのイラスト全ては原作、企業さまとは一切関係ありません</div>
@@ -2698,264 +2683,6 @@ async function lookupWeatherZip(){
 }
 
 // ════════════════════════════════════════════════════════════════
-// RSS
-// ブラウザから直接読めるフィードはそのまま取得し、CORSで弾かれるものだけ公開の中継(rss2json / allorigins など)経由で取得する。
-// RSS 2.0 / RSS 1.0(RDF) / Atom に対応。記事リンクはhttp(s)のみ許可し、表示はtextContentで行う。
-// ════════════════════════════════════════════════════════════════
-const RSS_TTL_MS=15*60*1000;
-// 直接読めないフィード用の中継(いずれも無料の公開サービスなので、止まったり制限されたりすることがある)。
-// corsproxy.io は無料枠がlocalhost限定になり、公開したサイトからは403で弾かれるため使わない。
-const RSS_RELAYS=[
-  {name:'rss2json',    url:u=>'https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(u), json:true},
-  {name:'allorigins',  url:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)},
-  {name:'codetabs',    url:u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)},
-  {name:'cors.eu.org', url:u=>'https://cors.eu.org/'+u},
-];
-function getRssFeeds(){ return JSON.parse(LS.get('roku_rss_feeds')||'[]'); }
-function saveRssFeeds(list){ LS.set('roku_rss_feeds', JSON.stringify(list)); }
-function rssCacheKey(id){ return 'roku_rss_cache_'+id; }
-function rssHost(url){ try{ return new URL(url).hostname.replace(/^www\./,''); }catch(e){ return url; } }
-
-// タイトルに含まれるHTMLエンティティやタグを取り除いた素のテキストにする(HTMLとしては実行されない)
-function rssCleanText(str){
-  const t=String(str||'').trim();
-  if(!/[<&]/.test(t)) return t;
-  try{ return (new DOMParser().parseFromString(t,'text/html').documentElement.textContent||'').replace(/\s+/g,' ').trim(); }
-  catch(e){ return t; }
-}
-function rssSafeUrl(u, base){
-  if(!u) return '';
-  try{ const x=new URL(u, base); return (x.protocol==='http:'||x.protocol==='https:') ? x.href : ''; }
-  catch(e){ return ''; }
-}
-function rssChildren(el){ return Array.prototype.slice.call(el.children||[]); }
-function rssChildText(el, names){
-  for(const c of rssChildren(el)){
-    if(names.includes(c.localName)){ const t=(c.textContent||'').trim(); if(t) return t; }
-  }
-  return '';
-}
-function rssItemLink(el, base){
-  let atomHref='';
-  for(const c of rssChildren(el)){
-    if(c.localName!=='link') continue;
-    const href=c.getAttribute('href');
-    if(href){ // Atom
-      const rel=c.getAttribute('rel');
-      if(!rel||rel==='alternate') return rssSafeUrl(href,base);
-      if(!atomHref) atomHref=href;
-    } else {  // RSS
-      const t=(c.textContent||'').trim();
-      if(t){ const u=rssSafeUrl(t,base); if(u) return u; }
-    }
-  }
-  if(atomHref){ const u=rssSafeUrl(atomHref,base); if(u) return u; }
-  const guid=rssChildText(el,['guid','id']);
-  return /^https?:\/\//i.test(guid) ? rssSafeUrl(guid,base) : '';
-}
-function parseFeedXml(text, feedUrl){
-  let doc;
-  try{ doc=new DOMParser().parseFromString(text,'text/xml'); }catch(e){ return null; }
-  if(!doc || !doc.documentElement || doc.getElementsByTagName('parsererror').length) return null;
-  let nodes=Array.prototype.slice.call(doc.getElementsByTagName('item'));
-  if(!nodes.length) nodes=Array.prototype.slice.call(doc.getElementsByTagName('entry'));
-  if(!nodes.length) return null;
-  const root=doc.documentElement;
-  const chan=root.getElementsByTagName('channel')[0]||root;
-  const name=rssCleanText(rssChildText(chan,['title'])).slice(0,30);
-  const items=nodes.slice(0,20).map(n=>{
-    const d=Date.parse(rssChildText(n,['pubDate','published','updated','date']));
-    return { t:rssCleanText(rssChildText(n,['title']))||'(無題)', l:rssItemLink(n,feedUrl), d:isNaN(d)?0:d };
-  });
-  return {name, items};
-}
-// rss2jsonが返すJSONを、XML解析の結果と同じ形に変換する
-function parseRss2Json(text, feedUrl){
-  let j;
-  try{ j=JSON.parse(text); }catch(e){ return null; }
-  if(!j || j.status!=='ok' || !Array.isArray(j.items) || !j.items.length) return null;
-  const items=j.items.slice(0,20).map(it=>{
-    let ds=String(it.pubDate||'');
-    if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(ds)) ds=ds.replace(' ','T')+'Z'; // UTCの「YYYY-MM-DD HH:MM:SS」で返ってくる
-    const d=Date.parse(ds);
-    return { t:rssCleanText(it.title)||'(無題)', l:rssSafeUrl(it.link||'', feedUrl), d:isNaN(d)?0:d };
-  });
-  return {name:rssCleanText((j.feed&&j.feed.title)||'').slice(0,30), items};
-}
-async function rssFetchText(url, ms, ctrl){
-  let timedOut=false;
-  const timer=setTimeout(()=>{ timedOut=true; ctrl.abort(); }, ms);
-  try{
-    const res=await fetch(url,{signal:ctrl.signal});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    return await res.text();
-  }catch(e){
-    if(timedOut) throw new Error('タイムアウト');
-    if(e && e.name==='TypeError') throw new Error('通信失敗(CORS・接続)');
-    throw e;
-  }finally{ clearTimeout(timer); }
-}
-// 1つの経路を試す。失敗しても例外は投げず、理由を note に入れて返す
-async function rssTryRoute(name, url, isJson, feedUrl, ms, ctrl){
-  try{
-    const text=await rssFetchText(url, ms, ctrl);
-    const parsed=isJson ? parseRss2Json(text, feedUrl) : parseFeedXml(text, feedUrl);
-    return parsed ? {parsed} : {note:name+': フィードとして読み取れない'};
-  }catch(e){
-    return {note:name+': '+((e&&e.message)||'失敗')};
-  }
-}
-async function rssFetchFeed(feedUrl){
-  const notes=[];
-  // 1) まず直接取得する。成功すれば中継サービスにURLを送らずに済む
-  const direct=await rssTryRoute('直接', feedUrl, false, feedUrl, 6000, new AbortController());
-  if(direct.parsed) return {parsed:direct.parsed, notes};
-  notes.push(direct.note);
-  // 2) 直接読めなかった時だけ、中継サービスへ同時に問い合わせ、最初に成功したものを使う(残りは中止)
-  const ctrls=RSS_RELAYS.map(()=>new AbortController());
-  return await new Promise(resolve=>{
-    let pending=RSS_RELAYS.length;
-    RSS_RELAYS.forEach((r,i)=>{
-      rssTryRoute(r.name, r.url(feedUrl), !!r.json, feedUrl, 10000, ctrls[i]).then(res=>{
-        if(res.parsed){ ctrls.forEach((c,j)=>{ if(j!==i) c.abort(); }); resolve({parsed:res.parsed, notes}); }
-        else{ notes.push(res.note); if(--pending===0) resolve({parsed:null, notes}); }
-      });
-    });
-  });
-}
-async function rssLoadFeed(feed, force){
-  const key=rssCacheKey(feed.id);
-  const cached=JSON.parse(LS.get(key)||'null');
-  if(!force && cached && Date.now()-cached.ts<RSS_TTL_MS) return {feed, name:cached.name, items:cached.items, error:false};
-  const res=await rssFetchFeed(feed.url);
-  if(res.parsed){
-    LS.set(key, JSON.stringify({ts:Date.now(), name:res.parsed.name, items:res.parsed.items}));
-    return {feed, name:res.parsed.name, items:res.parsed.items, error:false};
-  }
-  if(cached) return {feed, name:cached.name, items:cached.items, error:true, stale:true, notes:res.notes};
-  return {feed, name:'', items:[], error:true, notes:res.notes};
-}
-function rssSetStatus(text, detail){
-  const area=document.getElementById('rssArticles');
-  if(!area) return;
-  area.innerHTML='';
-  const d=document.createElement('div');
-  d.className='rss-status';
-  d.textContent=text;
-  area.appendChild(d);
-  if(detail){
-    const e=document.createElement('div');
-    e.className='rss-error';
-    e.textContent=detail;
-    area.appendChild(e);
-  }
-}
-let _rssBusy=false, _rssQueued=false;
-async function refreshRss(force){
-  const area=document.getElementById('rssArticles');
-  if(!area) return;
-  if(!getRssFeeds().length){ rssSetStatus('RSSのURLを追加してください'); return; }
-  if(_rssBusy){ _rssQueued=true; return; }
-  _rssBusy=true;
-  rssSetStatus('読み込み中...');
-  try{
-    const results=await Promise.all(getRssFeeds().map(f=>rssLoadFeed(f,force)));
-    const latest=getRssFeeds();
-    const alive=new Set(latest.map(f=>f.id));
-    let changed=false;
-    results.forEach(r=>{
-      const f=latest.find(x=>x.id===r.feed.id);
-      if(f && r.name && f.name!==r.name){ f.name=r.name; changed=true; }
-    });
-    if(changed){ saveRssFeeds(latest); renderRssFeedList(); }
-    renderRssArticles(results.filter(r=>alive.has(r.feed.id)));
-  } finally {
-    _rssBusy=false;
-    if(_rssQueued){ _rssQueued=false; refreshRss(false); }
-  }
-}
-function rssFailureDetail(r){
-  return (r.name||rssHost(r.feed.url))+(r.stale?'(前回分を表示中)':'')+' ― '+((r.notes||[]).join(' / ')||'原因不明');
-}
-function renderRssArticles(results){
-  const area=document.getElementById('rssArticles');
-  if(!area) return;
-  area.innerHTML='';
-  const all=[];
-  results.forEach(r=>{
-    const src=r.name||rssHost(r.feed.url);
-    r.items.forEach(it=>all.push({t:it.t, l:it.l, d:it.d, src}));
-  });
-  all.sort((a,b)=>b.d-a.d);
-  const failed=results.filter(r=>r.error);
-  if(!all.length){
-    rssSetStatus(failed.length ? '記事を取得できませんでした(URLがRSS/Atomフィードか、通信環境をご確認ください)' : '記事がありません',
-      failed.map(rssFailureDetail).join('\n'));
-    return;
-  }
-  all.slice(0,40).forEach(it=>{
-    const row=document.createElement('div');
-    row.className='rss-article';
-    let title;
-    if(it.l){ title=document.createElement('a'); title.href=it.l; title.target='_blank'; title.rel='noopener noreferrer'; }
-    else { title=document.createElement('span'); }
-    title.className='rss-article-title';
-    title.textContent=it.t;
-    const meta=document.createElement('span');
-    meta.className='rss-article-date';
-    meta.textContent=it.src+(it.d?' · '+noteCardTimeAgo(it.d):'');
-    row.appendChild(title); row.appendChild(meta);
-    area.appendChild(row);
-  });
-  if(failed.length){
-    const e=document.createElement('div');
-    e.className='rss-error';
-    e.textContent='⚠ 取得できなかったフィード\n'+failed.map(rssFailureDetail).join('\n');
-    area.appendChild(e);
-  }
-}
-function addRssFeed(){
-  const inp=document.getElementById('rssUrlInput');
-  if(!inp) return;
-  let url=(inp.value||'').trim();
-  if(!url) return;
-  if(!/^https?:\/\//i.test(url)) url='https://'+url;
-  try{ new URL(url); }catch(e){ rssSetStatus('URLの形式が正しくありません'); return; }
-  const feeds=getRssFeeds();
-  if(feeds.some(f=>f.url===url)){ rssSetStatus('このフィードは登録済みです'); return; }
-  feeds.push({id:'rss_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), url});
-  saveRssFeeds(feeds);
-  inp.value='';
-  renderRssFeedList();
-  refreshRss(false);
-}
-function removeRssFeed(id){
-  saveRssFeeds(getRssFeeds().filter(f=>f.id!==id));
-  LS.remove(rssCacheKey(id));
-  renderRssFeedList();
-  refreshRss(false);
-}
-function renderRssFeedList(){
-  const cont=document.getElementById('rssFeedList');
-  if(!cont) return;
-  const feeds=getRssFeeds();
-  cont.innerHTML='';
-  if(!feeds.length){
-    cont.innerHTML='<span class="search-hint">まだフィードが登録されていません</span>';
-    return;
-  }
-  feeds.forEach(f=>{
-    const chip=document.createElement('span');
-    chip.className='rss-feed-chip';
-    chip.innerHTML=`<span class="name" title="${escapeHtml(f.url)}">${escapeHtml(f.name||f.url)}</span><button title="削除">✕</button>`;
-    chip.querySelector('button').onclick=()=>removeRssFeed(f.id);
-    cont.appendChild(chip);
-  });
-}
-// 開きっぱなしでも一定時間ごとに(キャッシュの期限が切れたものだけ)更新する
-setInterval(()=>{ if(getRssFeeds().length) refreshRss(false); }, RSS_TTL_MS);
-
-// ════════════════════════════════════════════════════════════════
 // NOTECARD (Misskey風の簡易投稿カード。いいねの代わりにクリップ機能)
 // ════════════════════════════════════════════════════════════════
 let noteCardTab='timeline';
@@ -3078,6 +2805,51 @@ function removeQuickAccess(id){
   saveQuickAccess(getQuickAccess().filter(x=>x.id!==id));
   renderQuickAccessList();
 }
+// ── サイトアイコン(ファビコン) ──
+// 画像の表示はCORSの対象外なので<img>で読み込める。Google → DuckDuckGo → サイト自身の /favicon.ico の順に試し、
+// どれも取得できなければ汎用のリンクアイコンのままにする。
+// 成功した経路(や全滅した事実)は保存し、次回以降の無駄な通信を避ける(全滅は24時間後に再挑戦)。
+const QA_ICON_RETRY_MS=24*60*60*1000;
+const QA_GENERIC_ICON='<svg class="qa-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+function qaIconSources(url){
+  let u;
+  try{ u=new URL(url); }catch(e){ return []; }
+  if(u.protocol!=='http:' && u.protocol!=='https:') return [];
+  return [
+    'https://www.google.com/s2/favicons?sz=64&domain='+encodeURIComponent(u.hostname),
+    'https://icons.duckduckgo.com/ip3/'+u.hostname+'.ico',
+    u.origin+'/favicon.ico',
+  ];
+}
+function qaMarkIcon(id, idx){
+  const list=getQuickAccess();
+  const it=list.find(x=>x.id===id);
+  if(!it || (idx>=0 && it.ico===idx)) return;
+  it.ico=idx; it.icoTs=Date.now();
+  saveQuickAccess(list);
+}
+function qaBuildIcon(item){
+  const wrap=document.createElement('span');
+  wrap.className='qa-icon-wrap';
+  wrap.innerHTML=QA_GENERIC_ICON;
+  const sources=qaIconSources(item.url);
+  if(!sources.length) return wrap;
+  if(item.ico===-1 && Date.now()-(item.icoTs||0)<QA_ICON_RETRY_MS) return wrap; // 少し前に全滅したので、しばらく試さない
+  const tryAt=i=>{
+    if(i>=sources.length){ qaMarkIcon(item.id,-1); return; }
+    const img=new Image();
+    img.className='qa-icon'; img.alt=''; img.decoding='async'; img.referrerPolicy='no-referrer';
+    img.onload=()=>{
+      if(img.naturalWidth<2){ tryAt(i+1); return; } // 1pxの透明画像などは失敗扱い
+      wrap.innerHTML=''; wrap.classList.add('has-img'); wrap.appendChild(img);
+      qaMarkIcon(item.id,i);
+    };
+    img.onerror=()=>tryAt(i+1);
+    img.src=sources[i];
+  };
+  tryAt(typeof item.ico==='number' && item.ico>=0 ? item.ico : 0);
+  return wrap;
+}
 function renderQuickAccessList(){
   const cont=document.getElementById('qaList');
   if(!cont) return;
@@ -3092,9 +2864,9 @@ function renderQuickAccessList(){
     a.className='qa-item';
     a.href=item.url; a.target='_blank'; a.rel='noopener noreferrer';
     a.innerHTML=`
-      <svg class="qa-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span class="qa-name">${escapeHtml(item.name)}</span>
       <button class="qa-del-btn" title="削除">✕</button>`;
+    a.insertBefore(qaBuildIcon(item), a.firstChild);
     a.querySelector('.qa-del-btn').onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); removeQuickAccess(item.id); };
     cont.appendChild(a);
   });
@@ -3557,7 +3329,6 @@ const WIDGET_DEFS = {
   calc:        {label:'Calculator',       icon:'🧮', singleton:true,  domId:'widgetRoot_calc'},
   calendar:    {label:'Calendar',         icon:'📅', singleton:true,  domId:'widgetRoot_calendar'},
   weather:     {label:'Weather',          icon:'🌤',  singleton:true,  domId:'widgetRoot_weather'},
-  rss:         {label:'RSS Feed',         icon:'📰', singleton:true,  domId:'widgetRoot_rss'},
   notecard:    {label:'Notecard',         icon:'💬', singleton:true,  domId:'widgetRoot_notecard'},
   quickaccess: {label:'Quick Access',     icon:'🔗', singleton:true,  domId:'widgetRoot_quickaccess'},
   reminder:    {label:'Reminder',         icon:'⏰', singleton:true,  domId:'widgetRoot_reminder'},
@@ -3625,6 +3396,8 @@ function migrateLegacyDataIfNeeded(){
 }
 
 function purgeRemovedWidgetTypes(){
+  // 廃止したRSSカードの保存データ(フィード一覧・記事キャッシュ・中継の設定)を削除
+  Object.keys(localStorage).filter(k=>k==='roku_rss_feeds'||k==='roku_rss_relay'||k.indexOf('roku_rss_cache_')===0).forEach(k=>LS.remove(k));
   pages.forEach(p=>{
     const list=getPageWidgets(p.id);
     const filtered=list.filter(w=>WIDGET_DEFS[w.type]);
@@ -3639,8 +3412,6 @@ function initPagesSystem(){
   renderCalendar();
   showWeatherAreaLabel();
   if(LS.get('roku_weather_area')) fetchWeather(false);
-  renderRssFeedList();
-  refreshRss(false);
   renderNoteCardList();
   renderQuickAccessList();
   renderReminderList();
@@ -3833,9 +3604,9 @@ function deletePage(id){
         }
       }
     } else if(w.type==='notes'){
-      LS.remove('roku_pw_note_'+w.instanceId);
+      LS.remove('roku_pw_note_'+w.instanceId); setCardMinimized(w.instanceId,false);
     } else if(w.type==='todo'){
-      LS.remove('roku_pw_todos_'+w.instanceId);
+      LS.remove('roku_pw_todos_'+w.instanceId); setCardMinimized(w.instanceId,false);
     }
   });
   LS.remove('roku_page_widgets_'+id);
@@ -3902,7 +3673,7 @@ const WIDGET_GENRES=[
   {label:'⏱ 時間',        types:['pomodoro','normaltimer','stopwatch','calendar','reminder']},
   {label:'🎧 メディア',    types:['player','ambient']},
   {label:'📝 メモ・タスク', types:['notes','todo','routine','notecard']},
-  {label:'🌐 情報',        types:['weather','rss']},
+  {label:'🌐 情報',        types:['weather']},
   {label:'🧰 ツール',      types:['search','calc','quickaccess','clipboard']},
 ];
 function renderWidgetPicker(){
@@ -3971,6 +3742,7 @@ function removePageWidget(pageId, instanceId, type){
   } else {
     LS.remove('roku_pw_note_'+instanceId);
     LS.remove('roku_pw_todos_'+instanceId);
+    setCardMinimized(instanceId,false);
   }
   renderPageWidgets(getCurrentPage());
 }
@@ -4168,7 +3940,7 @@ function renderPageWidgets(page){
     } else if(w.type==='todo'){
       el=buildTodoWidget(page.id,w);
     }
-    if(el && el.nodeType===1) desired[laneIdx].push(el);
+    if(el && el.nodeType===1){ el.dataset.cardId=w.instanceId; applyCardMinimized(el); desired[laneIdx].push(el); }
   });
 
   // 既に正しい位置にあるカードには触れず、ずれているものだけを動かす。
@@ -4186,6 +3958,33 @@ function renderPageWidgets(page){
 
 // シングルトンウィジェット(player/timer各種/ambient/search/calc/calendar)を、実DOMノードごと現在のページへ「引っ越し」させて表示する
 // タイトルバー部分にカーソルを合わせるとつかんで移動でき、ホバー時に削除ボタンが現れる
+// ── カードの最小化 ──
+// 見出しだけ残して中身を隠す。状態は端末に保存する。
+// Notes/ToDoはカードごと、それ以外のカードは種類ごとに保存する(別のページに置いた同じカードも最小化のまま)。
+// 中身は取り外さず表示を隠すだけなので、Musicの再生やタイマーの動作は続く。
+const MIN_STATE_KEY='roku_card_min';
+const MIN_ICON_COLLAPSE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>';
+const MIN_ICON_EXPAND='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+function getMinState(){ try{ return JSON.parse(LS.get(MIN_STATE_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function setCardMinimized(id, on){
+  const m=getMinState();
+  if(on) m[id]=true; else delete m[id];
+  LS.set(MIN_STATE_KEY, JSON.stringify(m));
+}
+function minButtonHtml(){ return '<button class="widget-min-btn" title="最小化">'+MIN_ICON_COLLAPSE+'</button>'; }
+function applyCardMinimized(el){
+  const id=el.dataset.cardId;
+  if(!id) return;
+  const on=!!getMinState()[id];
+  el.classList.toggle('minimized', on);
+  const btn=el.querySelector('.widget-min-btn');
+  if(btn){ btn.title=on?'元に戻す':'最小化'; btn.innerHTML=on?MIN_ICON_EXPAND:MIN_ICON_COLLAPSE; }
+}
+function toggleCardMinimized(id){
+  setCardMinimized(id, !getMinState()[id]);
+  document.querySelectorAll('[data-card-id]').forEach(el=>{ if(el.dataset.cardId===id) applyCardMinimized(el); });
+}
+
 function buildSingletonWidgetCard(pageId, w){
   const def=WIDGET_DEFS[w.type];
   const el=document.getElementById(def.domId);
@@ -4194,8 +3993,9 @@ function buildSingletonWidgetCard(pageId, w){
   if(!el.querySelector(':scope > .dock-widget-titlebar')){
     const bar=document.createElement('div');
     bar.className='dock-widget-titlebar';
-    bar.innerHTML=`<span class="dock-widget-title">${escapeHtml(def.label)}</span><button class="dock-remove-btn widget-remove-btn" title="このページから外す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+    bar.innerHTML=`<span class="dock-widget-title">${escapeHtml(def.label)}</span>${minButtonHtml()}<button class="dock-remove-btn widget-remove-btn" title="このページから外す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
     bar.querySelector('.dock-remove-btn').onclick=(e)=>{ e.stopPropagation(); removePageWidget(currentPageId, w.instanceId, w.type); };
+    bar.querySelector('.widget-min-btn').onclick=(e)=>{ e.stopPropagation(); toggleCardMinimized(w.instanceId); };
     el.insertBefore(bar, el.firstChild);
     attachDragReorder(el, w.instanceId, bar);
   }
@@ -4208,10 +4008,12 @@ function buildNotesWidget(pageId, w){
   el.innerHTML=`
     <div class="page-widget-head">
       <span class="label">Notes</span>
+      ${minButtonHtml()}
       <button class="panel-collapse-btn widget-remove-btn" title="削除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <textarea id="pwNote_${w.instanceId}" placeholder="Focus on..."></textarea>`;
   el.querySelector('.widget-remove-btn').onclick=(e)=>{ e.stopPropagation(); removePageWidget(pageId,w.instanceId,'notes'); };
+  el.querySelector('.widget-min-btn').onclick=(e)=>{ e.stopPropagation(); toggleCardMinimized(w.instanceId); };
   attachDragReorder(el, w.instanceId, el.querySelector('.page-widget-head'));
   setTimeout(()=>{
     const ta=document.getElementById('pwNote_'+w.instanceId);
@@ -4229,6 +4031,7 @@ function buildTodoWidget(pageId, w){
   el.innerHTML=`
     <div class="page-widget-head">
       <span class="label">ToDo List</span>
+      ${minButtonHtml()}
       <button class="panel-collapse-btn widget-remove-btn" title="削除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="todo-input-group">
@@ -4238,6 +4041,7 @@ function buildTodoWidget(pageId, w){
     </div>
     <div class="todo-list" id="pwTodoList_${id}"></div>`;
   el.querySelector('.widget-remove-btn').onclick=(e)=>{ e.stopPropagation(); removePageWidget(pageId,id,'todo'); };
+  el.querySelector('.widget-min-btn').onclick=(e)=>{ e.stopPropagation(); toggleCardMinimized(id); };
   attachDragReorder(el, id, el.querySelector('.page-widget-head'));
   setTimeout(()=>{
     const inp=document.getElementById('pwTodoInput_'+id);
