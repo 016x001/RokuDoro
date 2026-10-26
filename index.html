@@ -276,6 +276,8 @@ input:checked+.slider-round:before{transform:translateX(12px);background-color:#
 .routine-item.done{opacity:.5}
 .routine-text{flex:1;min-width:0;font-size:12px;color:var(--text-main);word-break:break-word}
 .routine-item.done .routine-text{text-decoration:line-through}
+.routine-text,.todo-text{touch-action:manipulation}
+.routine-text[contenteditable="true"]{background:var(--border);padding:2px 5px;border-radius:4px;outline:none;cursor:text}
 .routine-del-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:0;flex-shrink:0}
 .routine-del-btn:hover{color:#e55}
 
@@ -2931,6 +2933,39 @@ function renderReminderList(){
   });
 }
 
+// ── テキストのその場編集(ToDo・Routine共通) ──
+// ダブルクリック(スマホはダブルタップ)で編集、Enterまたは枠の外をクリックで保存、Escで取り消し。
+// 空にして確定した場合は元の文章に戻す。保存時に一覧を作り直さないので、他の項目の操作を邪魔しない。
+function startInlineEdit(el, onSave){
+  if(el.getAttribute('contenteditable')==='true') return;
+  const original=el.textContent;
+  let cancelled=false, done=false;
+  el.setAttribute('contenteditable','true');
+  el.classList.add('editing');
+  el.focus();
+  const range=document.createRange(); range.selectNodeContents(el); range.collapse(false);
+  const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  const finish=()=>{
+    if(done) return; done=true;
+    el.removeEventListener('keydown',onKey); el.removeEventListener('blur',finish); el.removeEventListener('paste',onPaste);
+    el.setAttribute('contenteditable','false'); el.classList.remove('editing');
+    const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+    if(cancelled||!t){ el.textContent=original; return; }
+    el.textContent=t;
+    if(t!==original) onSave(t);
+  };
+  const onKey=e=>{
+    if(e.key==='Enter'){ e.preventDefault(); finish(); el.blur(); }
+    else if(e.key==='Escape'){ e.preventDefault(); cancelled=true; finish(); el.blur(); }
+  };
+  const onPaste=e=>{ // 書式付きのまま貼り付けられないよう、文字だけにして1行に整える
+    e.preventDefault();
+    const txt=((e.clipboardData||window.clipboardData).getData('text')||'').replace(/\s+/g,' ');
+    document.execCommand('insertText',false,txt);
+  };
+  el.addEventListener('keydown',onKey); el.addEventListener('blur',finish); el.addEventListener('paste',onPaste);
+}
+
 // ════════════════════════════════════════════════════════════════
 // ROUTINE (毎日リセットされるToDo)
 // 各タスクが「最後に完了した日」を持ち、それが今日の日付と一致すれば完了扱い。
@@ -2990,6 +3025,12 @@ function renderRoutineList(){
       <button class="routine-del-btn" title="削除">✕</button>`;
     el.querySelector('.custom-checkbox').onclick=()=>toggleRoutine(r.id);
     el.querySelector('.routine-del-btn').onclick=()=>removeRoutine(r.id);
+    const tx=el.querySelector('.routine-text');
+    tx.title='ダブルクリックで編集';
+    tx.addEventListener('dblclick',()=>startInlineEdit(tx, t=>{
+      const list=getRoutines(); const it=list.find(x=>x.id===r.id);
+      if(it){ it.text=t; saveRoutines(list); }
+    }));
     cont.appendChild(el);
   });
 }
@@ -4082,6 +4123,12 @@ function pwRenderTodos(id){
       <button style="background:transparent;border:none;color:#555;cursor:pointer;font-size:14px;padding:0 2px;">✕</button>`;
     row.querySelector('.custom-checkbox').onclick=()=>pwToggleTodo(id,i);
     row.querySelector('.color-dot').onclick=()=>pwCycleColor(id,i);
+    const tx=row.querySelector('.todo-text');
+    tx.title='ダブルクリックで編集';
+    tx.addEventListener('dblclick',()=>startInlineEdit(tx, t=>{
+      const a=pwGetTodos(id);
+      if(a[i]){ a[i].text=t; pwSaveTodos(id,a); }
+    }));
     row.querySelector('button').onclick=()=>pwRemoveTodo(id,i);
     cont.appendChild(row);
   });
