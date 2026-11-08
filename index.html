@@ -1218,7 +1218,6 @@ function pomoStart(){
       pomoMoveNextPhase(true,true);
     } else pomoUpdDisp();
   },500);
-  updateDocTitle();
 }
 function pomoMoveNextPhase(snd=true, wasRunning=false){
   if(snd) playAlarm();
@@ -1248,24 +1247,13 @@ function pomoForcePhase(p){
   pomoUpdDisp(); pomoUpdateIcons(false);
 }
 function pomoSkip(){ if(config.timeSync) return; if(pomoTimerId){clearInterval(pomoTimerId);pomoTimerId=null;} pomoMoveNextPhase(false); }
-// ── タブのタイトル ──
-// 動いているタイマーがある時だけ時間を表示し、何も動いていなければサイト名(RokuDoro)にする。
-// 以前は各タイマーの表示更新のたびにタイトルを書き換えていたため、停止中でも「00:00.00 - SW」などが出ていた。
-// ポモドーロ(時刻同期モード中も含む)→ストップウォッチの順に優先する。通常タイマーは従来どおりタイトルに出さない。
-let _pomoTitle='', _swTitle='';
-function updateDocTitle(){
-  let t='RokuDoro';
-  if((pomoTimerId!==null || config.timeSync) && _pomoTitle) t=_pomoTitle;
-  else if(swTimerId!==null && _swTitle) t=_swTitle;
-  if(document.title!==t) document.title=t;
-}
 function pomoUpdDisp(){
   const m=Math.floor(Math.max(0,pomoTimeLeft)/60), s=Math.max(0,pomoTimeLeft)%60;
   const ts=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   const dispEl=document.getElementById('pomoDisp'); if(dispEl) dispEl.innerText=ts;
   const statusEl=document.getElementById('pomoStatusTag'); if(statusEl) statusEl.innerText=pomoState.toUpperCase();
   const setEl=document.getElementById('pomoSetLabel'); if(setEl) setEl.innerText=`SET ${pomoCurrentSet} / ${config.maxSets}`;
-  _pomoTitle=`${ts} - RokuDoro`; updateDocTitle();
+  document.title=`${ts} - RokuDoro`;
   pomoUpdateIcons(pomoTimerId!==null);
 }
 function pomoUpdateIcons(run){
@@ -1281,7 +1269,6 @@ function pomoUpdateIcons(run){
   if(resetBtn) resetBtn.disabled=sync;
   if(startBtn) startBtn.disabled=sync;
   if(skipBtn) skipBtn.disabled=sync;
-  updateDocTitle();
 }
 
 // ── 通常タイマー(Timer) ──
@@ -1396,7 +1383,6 @@ function swStart(){
     swTime=swStartLeft+e;
     swUpdDisp();
   },100);
-  updateDocTitle();
 }
 function swReset(){
   if(swTimerId){ clearInterval(swTimerId); swTimerId=null; }
@@ -1423,14 +1409,13 @@ function swUpdDisp(){
   const m=Math.floor(swTime/600), s=Math.floor((swTime%600)/10), ms=swTime%10;
   const ts=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ms}0`;
   const d=document.getElementById('swDisp'); if(d) d.innerText=ts;
-  _swTitle=`${ts} - SW`; updateDocTitle();
+  document.title=`${ts} - SW`;
 }
 function swUpdateIcons(run){
   const play=document.getElementById('swPlayIcon'), pause=document.getElementById('swPauseIcon');
   if(play) play.style.display=run?'none':'block';
   if(pause) pause.style.display=run?'block':'none';
   const lb=document.getElementById('swLapBtn'); if(lb) lb.disabled=!run||swLaps.length>=3;
-  updateDocTitle();
 }
 
 // ════════════════════════════════════════════════════════════════
